@@ -4,8 +4,8 @@
 #define image_tools_h
 
 /// @brief Element of RGB matrix
-struct color_rgb {
-    color_rgb(unsigned char r, unsigned char g, unsigned char b)
+struct Colorrgb {
+    Colorrgb(unsigned char r, unsigned char g, unsigned char b)
     {
         red = r;
         green = g;
@@ -17,9 +17,9 @@ struct color_rgb {
     unsigned char blue;
 };
 
-struct matrix_coord {
+struct Matrixcoord {
 
-    matrix_coord(unsigned x, unsigned y)
+    Matrixcoord(unsigned x, unsigned y)
     {
         this->x = x;
         this->y = y;
@@ -30,23 +30,23 @@ struct matrix_coord {
 };
 
 /// @brief Abstract matrix
-class matrix {
+class Matrix {
     public:
         std::vector<unsigned char> array;
         unsigned width;
         unsigned height;
 
-        matrix(unsigned width, unsigned height);
-        matrix();
+        Matrix(unsigned width, unsigned height);
+        Matrix();
 };
 
 /// @brief Abstract image matrix
 /// @tparam E Type of matrix elements
 template<typename E>
-class matrix_color : public matrix {
+class MatrixColor : public Matrix {
     public:
-    matrix_color() : matrix() {}
-    matrix_color(unsigned width, unsigned height) : matrix(width, height) {}
+    MatrixColor() : Matrix() {}
+    MatrixColor(unsigned width, unsigned height) : Matrix(width, height) {}
 
     /// @brief Assign value to matrix cell
     /// @param[in] x x coordinate
@@ -57,40 +57,40 @@ class matrix_color : public matrix {
     /// @brief Assign value to matrix cell
     /// @param[in] coord coordinates
     /// @param[in] color element value
-    void virtual set(matrix_coord coord, E color) = 0;
+    void virtual Set(Matrixcoord coord, E color) = 0;
 
     /// @brief Get matrix cell value
     /// @param[in] x x coordinate
     /// @param[in] y y coordinate
     /// @return cell value
-    E virtual get(unsigned x, unsigned y) = 0;
+    E virtual Get(unsigned x, unsigned y) = 0;
 
     /// @brief Assign \p value to each matrix cell
-    /// @param[in] value 
-    void virtual fill(E value);
+    /// @param[in] value
+    void virtual Fill(E value) = 0;
 };
 
 /// @brief Matrix for storing RGB images
-class matrix_rgb : public matrix_color<color_rgb>
+class Matrix_rgb : public Matrix_color<color_rgb>
 {
     public:
-        matrix_rgb(): matrix_color<color_rgb>() {}
-        matrix_rgb(unsigned width, unsigned height): matrix_color<color_rgb>(width, height) {}
+        Matrix_rgb(): Matrix_color<color_rgb>() {}
+        Matrix_rgb(unsigned width, unsigned height): Matrix_color<color_rgb>(width, height) {}
         void virtual set(unsigned x, unsigned y, color_rgb color);
-        void virtual set(matrix_coord coord, color_rgb color);
-        color_rgb virtual get(unsigned x, unsigned y);
-        void virtual fill(color_rgb value);
+        void virtual Set(Matrixcoord coord, color_rgb color);
+        color_rgb virtual Get(unsigned x, unsigned y);
+        void virtual Fill(color_rgb value);
 };
 
 /// @brief Matrix for storing grayscale images
-class matrix_gray : public matrix_color<unsigned char>
+class Matrix_gray : public Matrix_color<unsigned char>
 {
     public:
-        matrix_gray(unsigned width, unsigned height): matrix_color<unsigned char>(width, height) {}
-        void virtual set(unsigned x, unsigned y, unsigned char color);
-        void virtual set(matrix_coord coord, unsigned char color);
-        unsigned char virtual get(unsigned x, unsigned y);
-        void virtual fill(unsigned char value);
+        Matrix_gray(unsigned width, unsigned height): Matrix_color<unsigned char>(width, height) {}
+        void virtual Set(unsigned x, unsigned y, unsigned char color);
+        void virtual Set(Matrixcoord coord, unsigned char color);
+        unsigned char virtual Get(unsigned x, unsigned y);
+        void virtual Fill(unsigned char value);
 };
 
 #include "impls/image_tools.ipp"
