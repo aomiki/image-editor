@@ -66,7 +66,7 @@ class matrix_color : public matrix {
     E virtual get(unsigned x, unsigned y) = 0;
 
     /// @brief Assign \p value to each matrix cell
-    /// @param[in] value 
+    /// @param[in] value
     void virtual fill(E value);
 };
 
