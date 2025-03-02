@@ -3,22 +3,25 @@
 #Main compiler
 CXX = g++
 
+#source code
+SRC = src
+
 #Modules
-MODULES_SRC = $(wildcard modules/impls/*.cpp)
+MODULES_SRC = $(wildcard $(SRC)/modules/impls/*.cpp)
 MODULES := $(patsubst %.cpp,%.o,$(MODULES_SRC))
 
 #LodePNG implementation
-LODE_SRC := include/lodepng/lodepng.cpp modules/impls/image_codecs/image_codec_lodepng.cpp
+LODE_SRC := include/lodepng/lodepng.cpp $(SRC)/modules/impls/image_codecs/image_codec_lodepng.cpp
 LODE :=  $(patsubst %.cpp,%.o,$(LODE_SRC))
 
 #CUDA implementation
-CUDA_MODULES_SRC := $(wildcard modules/impls/**/*.cu)
+CUDA_MODULES_SRC := $(wildcard $(SRC)/modules/impls/**/*.cu)
 CUDA_MODULES := $(patsubst %.cu,%.o,$(CUDA_MODULES_SRC))
 LDFLAGS_CUDA := -L/opt/cuda/lib
 LDLIBS_CUDA := -lcuda -lcudart -lnvjpeg_static -lculibos
 
 #General arguments
-LDFLAGS := -I modules/ -I include/lodepng/
+LDFLAGS := -I $(SRC)/modules/ -I include/lodepng/
 CXXFLAGS := $(LDFLAGS) $(MODULES) Program.o -g
 
 #Compile with LodePNG implementation (link object files)
