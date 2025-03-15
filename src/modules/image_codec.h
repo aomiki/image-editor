@@ -5,14 +5,19 @@
 #ifndef image_codec_h
 #define image_codec_h
 
-enum ImageColorScheme{
-    IMAGE_GRAY,
-    IMAGE_RGB
+struct ImageInfo {
+    ImageColorScheme colorScheme;
+    unsigned int bit_depth;
+
+    unsigned int width;
+    unsigned int height;
 };
 
 class image_codec {
     public:
         image_codec();
+
+        ImageInfo read_info(std::vector<unsigned char>* img_buffer);
 
         /// @brief Encodes image matrix to supported format
         /// @param[out] img_buffer Buffer for encoded image

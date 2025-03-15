@@ -1,24 +1,29 @@
-
 template<typename E>
 void matrix_color<E>::fill(E value)
 {
-    for (size_t x = 0; x < width; x++)
-    {
-        for (size_t y = 0; y < height; y++)
-        {
-            set(x, y, value);
-        }
-    }
+    unsigned char* c_value = new unsigned char[components_num];
+    element_to_c_arr(c_value, value);
+    matrix::fill(c_value);
 }
 
-inline matrix::matrix(unsigned width, unsigned height)
+template<typename E>
+E matrix_color<E>::get(unsigned x, unsigned y)
 {
-    this->height = height;
-    this->width = width;
+    unsigned char* cell = matrix::get(x, y);
+    E value = c_arr_to_element(cell);
+
+    return value;
+};
+
+template<typename E>
+void matrix_color<E>::set(matrix_coord coord, E value)
+{
+    set(coord.x, coord.y , value);
 }
 
-inline matrix::matrix()
+template<typename E>
+void matrix_color<E>::set(unsigned x, unsigned y, E value)
 {
-    this->height = 0;
-    this->width = 0;
+    unsigned char* cell = matrix::get(x, y);
+    element_to_c_arr(cell, value);
 }

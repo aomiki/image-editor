@@ -8,7 +8,7 @@
         "name": "(gdb) Launch",
         "type": "cppdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/graphics-cuda.out",
+        "program": "${workspaceFolder}/graphics-lode.out",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
@@ -33,7 +33,7 @@
         "type": "cuda-gdb",
         "request": "launch",
         "program": "${workspaceFolder}/graphics-cuda.out",
-        "cwd": "${fileDirname}"
+        "cwd": "${workspaceFolder}"
     }
     ]
 }
