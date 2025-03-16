@@ -1,4 +1,6 @@
 # Image editor
+[![Build with LodePNG](https://github.com/aomiki/image-editor/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/aomiki/image-editor/actions/workflows/c-cpp.yml)
+[![Build with CUDA](https://github.com/aomiki/image-editor/actions/workflows/cuda.yml/badge.svg)](https://github.com/aomiki/image-editor/actions/workflows/cuda.yml)
 
 ## Build
 
