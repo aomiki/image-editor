@@ -16,15 +16,22 @@ jobs:
       id: cuda-toolkit
       with:
         cuda: '12.5.0'
+        method: 'network'
+        sub-packages: '["nvcc", "cudart", "cudart-dev"]'
+        non-cuda-sub-packages: '["cuda", "libnvjpeg"]'
 
     - run: echo "Installed cuda version is ${{steps.cuda-toolkit.outputs.cuda}}"
-    
+
     - run: echo "Cuda install location ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-    
+
+    - run: echo "Cuda path $CUDA_PATH"
+    - run: ls "$CUDA_PATH"
+    - run: ls "$CUDA_PATH/lib64"
+
     - run: nvcc -V
-  
+
     - name: create output
       run: mkdir output
-  
+
     - name: make build CUDA
-      run: make graphics-cuda.out
+      run: make LIBRARY_PATH="$CUDA_PATH/lib64" graphics-cuda.out
