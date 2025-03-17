@@ -5,17 +5,16 @@
 #include <iostream>
 #include <string>
 #include <vector>
-namespace po = boost::program_options;
-
+#include "cmd_parser.hpp"
 namespace fs = std::filesystem;
 
 const fs::path result_folder("output");
 const fs::path input_folder("input");
 
-po::variables_map parse_arguments(int ac, char *av[]);
 
 void decode_encode_img(std::string filepath, image_codec *codec);
 
+namespace po = boost::program_options;
 int main(int ac, char *av[]) {
     std::cout << "Shellow from SSAU!" << std::endl;
 
@@ -29,33 +28,7 @@ int main(int ac, char *av[]) {
         std::cerr << "Exception of unknown type!\n";
     }
 
-    image_codec codec;
 
-}
-
-/// @brief parse command line arguments
-po::variables_map parse_arguments(int ac, char* av[]) {
-    po::options_description desc("Allowed options");
-    desc.add_options()
-        ("help", "produce help message")
-        ("decode", po::value<std::string>(), "path/to/image to decode image to output/");
-
-    po::variables_map vm;
-    po::store(po::parse_command_line(ac, av, desc), vm);
-    po::notify(vm);
-
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
-        exit(0);      }
-
-    if (vm.count("decode")) {
-        image_codec codec;
-        std::string inp_img = vm["decode"].as<std::string>();
-        decode_encode_img(inp_img, &codec);
-        std::cout << inp_img << " decoded successfully\n";
-    }
-
-    return vm;
 }
 
 /// @brief Draws border around an image
@@ -80,7 +53,7 @@ void draw_border(matrix_color<E> &img_matrix, E border_color) {
 void decode_encode_img(std::string filepath, image_codec *codec) {
     std::vector<unsigned char> img_buffer;
 
-    codec->load_image_file(&img_buffer, filepath);
+    codec->load_image_file(&img_buffer, input_folder / filepath);
 
     ImageInfo info = codec->read_info(&img_buffer);
 
