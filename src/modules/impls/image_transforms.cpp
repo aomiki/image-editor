@@ -1,6 +1,5 @@
 #include "image_transforms.h"
 #include <cstring>
-#include <iostream>
 using namespace std;
 
 void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) 
@@ -9,23 +8,17 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
     unsigned new_height = img.height - crop_top - crop_bottom;
 
     
-    if (new_width <= 0 || new_height <= 0) {
-        cerr << "Error: Cropped size is invalid! (" << new_width << "x" << new_height << ")" << endl;
+    if (new_width <= 0 || new_height <= 0) 
+    {
         return;
     }
 
-    if (crop_left + crop_right > img.width || crop_top + crop_bottom > img.height) {
-        cerr << "Error: Cropping dimensions exceed image size!" << endl;
+    if (crop_left + crop_right > img.width || crop_top + crop_bottom > img.height) 
+    {
         return;
     }
 
     unsigned char* newArr = new (std::nothrow) unsigned char[new_width * new_height * img.components_num];
-    if (!newArr) {
-        cerr << "Error: Memory allocation failed! Requested size: " 
-             << new_width * new_height * img.components_num << " bytes" << endl;
-        return;
-    }
-
     unsigned char* src = img.arr + (crop_top * img.width + crop_left) * img.components_num;
     unsigned char* dst = newArr;
 
@@ -54,17 +47,14 @@ void rotate(matrix& img, unsigned angle)
     unsigned new_height = (angle == 90 || angle == 270) ? img.width : img.height;
 
     unsigned char* newArr = new (std::nothrow) unsigned char[new_width * new_height * img.components_num];
-    if (!newArr) {
-        cerr << "Error: Memory allocation failed!" << endl;
-        return;
-    }
 
     for (unsigned y = 0; y < img.height; ++y) {
         for (unsigned x = 0; x < img.width; ++x) {
             unsigned old_idx = (y * img.width + x) * img.components_num;
             unsigned new_idx = 0;
 
-            switch (angle) {
+            switch (angle) 
+            {
                 case 90:
                     new_idx = ((x * new_width) + (new_width - y - 1)) * img.components_num;
                     break;
