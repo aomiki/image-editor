@@ -2,22 +2,26 @@ name: Build with LodePNG
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - name: Install General
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-program-options-dev
 
-    - name: checkout lode
-      run: git submodule update --init --recursive
-    - name: create output
-      run: mkdir output
+      - name: checkout lode
+        run: git submodule update --init --recursive
 
-    - name: make build LodePNG
-      run: make graphics-lode.out
+      - name: create output
+        run: mkdir output
+
+      - name: make build LodePNG
+        run: make graphics-lode.out
