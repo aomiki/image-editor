@@ -9,6 +9,8 @@ inline LodePNGColorType ColorSchemeToLodeColorType(ImageColorScheme colorscheme)
             return LodePNGColorType::LCT_GREY;
         case ImageColorScheme::IMAGE_RGB :
             return LodePNGColorType::LCT_RGB;
+        case ImageColorScheme::IMAGE_PALETTE:
+            return LodePNGColorType::LCT_PALETTE;
         default:
             return LodePNGColorType::LCT_MAX_OCTET_VALUE;
     }
@@ -22,10 +24,10 @@ inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType colo
             return ImageColorScheme::IMAGE_RGB;
         case LodePNGColorType::LCT_RGB:
             return ImageColorScheme::IMAGE_RGB;
-        case LodePNGColorType::LCT_GREY:
-            return ImageColorScheme::IMAGE_GRAY;
         case LodePNGColorType::LCT_PALETTE:
             return ImageColorScheme::IMAGE_PALETTE;
+        case LodePNGColorType::LCT_GREY:
+            return ImageColorScheme::IMAGE_GRAY;
         
         
     }

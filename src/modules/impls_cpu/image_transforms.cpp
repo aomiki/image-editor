@@ -25,7 +25,7 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
              << new_width * new_height * img.components_num << " bytes" << endl;
         return;
     }
-
+// создвать матрицу а не массив создавать объект класса матрица(?)
     unsigned char* src = img.arr + (crop_top * img.width + crop_left) * img.components_num;
     unsigned char* dst = newArr;
 
@@ -36,12 +36,9 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
         dst += new_width * img.components_num;  
     }
 
-    if (img.arr != nullptr) {
-        delete[] img.arr;
-        img.arr = nullptr;
-    }
+    
+    delete[] img.arr;
 
-    img.arr = newArr;
-    img.width = new_width;
-    img.height = new_height;
+    img.set_arr_interlaced(newArr, new_width, new_height);
+
 }

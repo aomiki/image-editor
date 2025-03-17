@@ -107,15 +107,19 @@ void transform_image(std::string filepath, image_codec* codec)
     {
         mat = new matrix_gray(info.width, info.height);
     }
-
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    {
+        mat = new matrix_rgb(info.width, info.height);
+    }
 
     codec->decode(&img_buffer, mat, info.colorScheme, info.bit_depth);
 
-    crop(*mat, 5, 5, 5, 5);
+    crop(*mat, 200, 200, 200, 200);
 
     img_buffer.clear();
     codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
     codec->save_image_file(&img_buffer, result_folder / "cropped_result");
 
-    delete mat;
+    //delete mat;
 }
+// ghex
