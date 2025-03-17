@@ -18,7 +18,7 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
         return;
     }
 
-    unsigned char* newArr = new (std::nothrow) unsigned char[new_width * new_height * img.components_num];
+    unsigned char* newArr = new unsigned char[new_width * new_height * img.components_num];
     unsigned char* src = img.arr + (crop_top * img.width + crop_left) * img.components_num;
     unsigned char* dst = newArr;
 
@@ -40,33 +40,31 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
 void rotate(matrix& img, unsigned angle) 
 {
     angle = angle % 360;  
-
     if (angle == 0) return; 
 
     unsigned new_width = (angle == 90 || angle == 270) ? img.height : img.width;
     unsigned new_height = (angle == 90 || angle == 270) ? img.width : img.height;
 
-    unsigned char* newArr = new (std::nothrow) unsigned char[new_width * new_height * img.components_num];
+    unsigned char* newArr = new unsigned char[new_width * new_height * img.components_num];
 
     for (unsigned y = 0; y < img.height; ++y) {
         for (unsigned x = 0; x < img.width; ++x) {
-            unsigned old_idx = (y * img.width + x) * img.components_num;
-            unsigned new_idx = 0;
-
-            switch (angle) 
-            {
+            unsigned char* old_pixel = img.get(x, y); 
+            unsigned char* new_pixel = nullptr;  
+            
+            switch (angle) {
                 case 90:
-                    new_idx = ((x * new_width) + (new_width - y - 1)) * img.components_num;
+                    new_pixel = &newArr[(x * new_width + (new_width - y - 1)) * img.components_num];
                     break;
                 case 180:
-                    new_idx = ((new_height - y - 1) * new_width + (new_width - x - 1)) * img.components_num;
+                    new_pixel = &newArr[((new_height - y - 1) * new_width + (new_width - x - 1)) * img.components_num];
                     break;
                 case 270:
-                    new_idx = ((new_height - x - 1) * new_width + y) * img.components_num;
+                    new_pixel = &newArr[((new_height - x - 1) * new_width + y) * img.components_num];
                     break;
             }
 
-            memcpy(&newArr[new_idx], &img.arr[old_idx], img.components_num);
+            memcpy(new_pixel, old_pixel, img.components_num);
         }
     }
 
