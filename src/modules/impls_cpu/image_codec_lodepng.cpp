@@ -24,6 +24,10 @@ inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType colo
             return ImageColorScheme::IMAGE_RGB;
         case LodePNGColorType::LCT_GREY:
             return ImageColorScheme::IMAGE_GRAY;
+        case LodePNGColorType::LCT_PALETTE:
+            return ImageColorScheme::IMAGE_PALETTE;
+        
+        
     }
 }
 

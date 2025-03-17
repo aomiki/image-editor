@@ -130,7 +130,7 @@ void image_codec::encode(std::vector<unsigned char>* img_buffer, matrix* img_mat
     cuda_log(cudaFree(nv_image.channel[0]));
 }
 
-void image_codec::decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth)
+void image_codec::decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth, LodePNGState* state = nullptr)
 {
     if (img_matrix->height == 0 || img_matrix->width == 0)
     {
