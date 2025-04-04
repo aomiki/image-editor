@@ -9,47 +9,36 @@ namespace fs = std::filesystem;
 const fs::path result_folder("output");
 const fs::path input_folder("input");
 
-class Program {
-public:
-    Program() = default;
-    ~Program() = default;
-    
-    int run(int argc, char* argv[]) {
-        CmdParser parser;
-        
-        parser.parse_arguments(argc, argv);
-
-        CommandType cmdType = parser.get_command_type();
-  
-        switch (cmdType) {
-            case CommandType::HELP: {
-                std::cout << "Help requested\n";
-                auto helpData = parser.get_help_command_data();
-                return 0;
-            }
-            
-            case CommandType::DRAW_BORDER: {
-                auto drawBorderData = parser.get_draw_border_command_data();
-                if (drawBorderData) {
-                    std::cout << "Processing image: " << drawBorderData->imagePath << "\n";
-                    image_codec codec;
-                    parser.decode_encode_img(drawBorderData->imagePath, &codec);
-                    std::cout << drawBorderData->imagePath << " drawed successfully\n";
-                }
-                return 0;
-            }
-            
-            case CommandType::NONE:
-            default:
-                std::cout << "No valid command specified\n";
-                return 1;
-        }
-    }
-};
-
 int main(int argc, char* argv[]) {
-    Program program;
-    return program.run(argc, argv);
+    CmdParser parser;
+    
+    parser.parse_arguments(argc, argv);
+
+    CommandType cmdType = parser.get_command_type();
+
+    switch (cmdType) {
+        case CommandType::HELP: {
+            std::cout << "Help requested\n";
+            auto helpData = parser.get_help_command_data();
+            return 0;
+        }
+        
+        case CommandType::DRAW_BORDER: {
+            auto drawBorderData = parser.get_draw_border_command_data();
+            if (drawBorderData) {
+                std::cout << "Processing image: " << drawBorderData->imagePath << "\n";
+                image_codec codec;
+                parser.decode_encode_img(drawBorderData->imagePath, &codec);
+                std::cout << drawBorderData->imagePath << " drawed successfully\n";
+            }
+            return 0;
+        }
+        
+        case CommandType::NONE:
+        default:
+            std::cout << "No valid command specified\n";
+            return 1;
+    }
 }
 
 /// @brief Draws border around an image
