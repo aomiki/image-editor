@@ -1,34 +1,55 @@
-#include "image_codec.h"
-#include "image_tools.h"
-#include <boost/program_options.hpp>
-#include <filesystem>
+#include "modules/cmd_parser.h"
+#include "modules/image_codec.h"
 #include <iostream>
-#include <string>
-#include <vector>
-#include "cmd_parser.hpp"
+#include <memory>
+#include <filesystem>
+
 namespace fs = std::filesystem;
 
 const fs::path result_folder("output");
 const fs::path input_folder("input");
 
+class Program {
+public:
+    Program() = default;
+    ~Program() = default;
+    
+    int run(int argc, char* argv[]) {
+        CmdParser parser;
+        
+        parser.parse_arguments(argc, argv);
 
-void decode_encode_img(std::string filepath, image_codec *codec);
-
-namespace po = boost::program_options;
-int main(int ac, char *av[]) {
-    std::cout << "Shellow from SSAU!" << std::endl;
-
-    try {
-        po::variables_map vm = parse_arguments(ac, av);
-
-    } catch (std::exception &e) {
-        std::cerr << "error: " << e.what() << "\n";
-        return 1;
-    } catch (...) {
-        std::cerr << "Exception of unknown type!\n";
+        CommandType cmdType = parser.get_command_type();
+  
+        switch (cmdType) {
+            case CommandType::HELP: {
+                std::cout << "Help requested\n";
+                auto helpData = parser.get_help_command_data();
+                return 0;
+            }
+            
+            case CommandType::DRAW_BORDER: {
+                auto drawBorderData = parser.get_draw_border_command_data();
+                if (drawBorderData) {
+                    std::cout << "Processing image: " << drawBorderData->imagePath << "\n";
+                    image_codec codec;
+                    parser.decode_encode_img(drawBorderData->imagePath, &codec);
+                    std::cout << drawBorderData->imagePath << " drawed successfully\n";
+                }
+                return 0;
+            }
+            
+            case CommandType::NONE:
+            default:
+                std::cout << "No valid command specified\n";
+                return 1;
+        }
     }
+};
 
-
+int main(int argc, char* argv[]) {
+    Program program;
+    return program.run(argc, argv);
 }
 
 /// @brief Draws border around an image

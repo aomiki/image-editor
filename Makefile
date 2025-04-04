@@ -11,6 +11,10 @@ MODULES_DIR=$(SRC)/modules
 MODULES_SRC = $(wildcard $(MODULES_DIR)/impls/*.cpp)
 MODULES := $(patsubst %.cpp,%.o,$(MODULES_SRC))
 
+#Command parser
+CMD_PARSER_SRC = $(MODULES_DIR)/cmd_parser.cpp
+CMD_PARSER_OBJ = $(MODULES_DIR)/cmd_parser.o
+
 #Modules that are used both by LODE implementation and directly in CUDA kernels
 MODULES_SHARED_SRC = $(wildcard $(MODULES_DIR)/impls_shared/*.cpp)
 MODULES_SHARED_CPP := $(patsubst %.cpp,%.o,$(MODULES_SHARED_SRC))
@@ -35,8 +39,8 @@ CXXFLAGS := $(LDFLAGS) $(MODULES) $(SRC)/Program.o -g
 
 #Compile with LodePNG implementation (link object files)
 graphics-lode.out: HW_ACCEL = LODE_IMPL
-graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(SRC)/Program.o
-	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-lode.out -lboost_program_options
+graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(SRC)/Program.o $(CMD_PARSER_OBJ)
+	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-lode.out -lboost_program_options
 
 #Compile with CUDA implementation
 graphics-cuda.out: HW_ACCEL = CUDA_IMPL
