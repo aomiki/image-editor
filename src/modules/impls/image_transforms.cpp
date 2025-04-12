@@ -72,3 +72,24 @@ void rotate(matrix& img, unsigned angle)
     img.set_arr_interlaced(newArr, new_width, new_height);
 }
 
+
+void reflect(matrix& img, bool horizontal, bool vertical) 
+{
+    if (!horizontal && !vertical) return;
+
+    unsigned char* newArr = new unsigned char[img.width * img.height * img.components_num];
+
+    for (unsigned y = 0; y < img.height; ++y) {
+        for (unsigned x = 0; x < img.width; ++x) {
+            unsigned target_x = vertical ? (img.width - 1 - x) : x;
+            unsigned target_y = horizontal ? (img.height - 1 - y) : y;
+            
+            unsigned char* src = img.get(x, y);
+            unsigned char* dst = &newArr[(target_y * img.width + target_x) * img.components_num];
+            memcpy(dst, src, img.components_num);
+        }
+    }
+
+    delete[] img.arr;
+    img.arr = newArr;
+}

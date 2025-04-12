@@ -8,8 +8,9 @@
 
 namespace fs = std::filesystem;
 
-const std::filesystem::path input_folder("input");
-const std::filesystem::path result_folder("output");
+const fs::path result_folder("output");
+const fs::path input_folder ("input");
+
 
 void decode_encode_img(std::string filepath, image_codec* codec);
 
@@ -27,8 +28,9 @@ int main()
     #endif
 
     decode_encode_img(inp_img, &codec);
-    transform_image_crop(inp_img, &codec);
+    transform_image_crop(inp_img, &codec, 100, 100, 100, 100);
     transform_image_rotate(inp_img, &codec, 270); //пока только на 90, 180, 270 
+    transform_image_reflect(inp_img, &codec, true, true);
 
     std::cout << "that's it" << std::endl;
 }

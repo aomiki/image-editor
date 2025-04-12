@@ -4,7 +4,9 @@
 #include <string>
 
 
-void transform_image_crop(std::string filepath, image_codec* codec)
+void transform_image_crop(std::string filepath, image_codec* codec, 
+                         unsigned int crop_left, unsigned int crop_top,
+                         unsigned int crop_right, unsigned int crop_bottom)
 {
     std::vector<unsigned char> img_buffer;
 
@@ -28,7 +30,7 @@ void transform_image_crop(std::string filepath, image_codec* codec)
 
     codec->decode(&img_buffer, mat, info.colorScheme, info.bit_depth);
 
-    crop(*mat, 200, 200, 200, 200);
+    crop(*mat, crop_left, crop_top, crop_right, crop_bottom);
 
     img_buffer.clear();
     codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
@@ -66,6 +68,39 @@ void transform_image_rotate(std::string filepath, image_codec* codec, unsigned a
     img_buffer.clear();
     codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
     codec->save_image_file(&img_buffer, result_folder / "rotated_result");
+
+    //delete mat;  
+}
+
+void transform_image_reflect(std::string filepath, image_codec* codec, bool horizontal, bool vertical)
+{
+    std::vector<unsigned char> img_buffer;
+
+    codec->load_image_file(&img_buffer, input_folder / filepath);
+    ImageInfo info = codec->read_info(&img_buffer);
+
+    matrix* mat = nullptr;
+
+    if (info.colorScheme == ImageColorScheme::IMAGE_RGB) 
+    {
+        mat = new matrix_rgb(info.width, info.height);
+    } 
+    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY) 
+    {
+        mat = new matrix_gray(info.width, info.height);
+    }
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    {
+        mat = new matrix_rgb(info.width, info.height);
+    }
+
+    codec->decode(&img_buffer, mat, info.colorScheme, info.bit_depth);
+
+    reflect(*mat, horizontal, vertical);
+
+    img_buffer.clear();
+    codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
+    codec->save_image_file(&img_buffer, result_folder / "reflect_result");
 
     //delete mat;  
 }
