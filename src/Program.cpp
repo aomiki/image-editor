@@ -13,9 +13,9 @@
 
 namespace fs = std::filesystem;
 
-
 const fs::path result_folder("output");
-const fs::path input_folder("input");
+const fs::path input_folder ("input");
+
 
 void decode_encode_img(std::string filepath, image_codec* codec);
 
