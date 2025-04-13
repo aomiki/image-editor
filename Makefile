@@ -59,8 +59,13 @@ OPENCL_INCLUDE := $(INC)/CL
 OPENCL_LIBS := -L/usr/lib/x86_64-linux-gnu -lOpenCL
 
 #General arguments
+<<<<<<< HEAD
 LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/ -I$(OPENCL_INCLUDE)
 CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g
+=======
+LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I LRs/ -I/usr/include/openblas -fopenmp -lopenblas
+CXXFLAGS := $(LDFLAGS) $(MODULES) $(SRC)/Program.o -g
+>>>>>>> 033a26b1 (added shear)
 
 #Compile with LodePNG implementation (link object files)
 graphics-lode.out: HW_ACCEL = LODE_IMPL
