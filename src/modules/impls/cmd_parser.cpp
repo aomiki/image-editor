@@ -1,11 +1,6 @@
 #include "cmd_parser.h"
 #include <iostream>
 #include "image_codec.h"
-#include <filesystem>
-#include <vector>
-
-namespace fs = std::filesystem;
-
 
 extern void decode_encode_img(std::string filepath, image_codec *codec);
 
@@ -47,13 +42,13 @@ CommandType CmdParser::get_command_type() const {
     else if (vm.count("draw_border")) {
         return CommandType::DRAW_BORDER;
     }
-    
+
     return CommandType::NONE;
 }
 
 std::unique_ptr<CommandData> CmdParser::get_command_data() const {
     CommandType type = get_command_type();
-    
+
     switch (type) {
         case CommandType::HELP:
             return get_help_command_data();
@@ -69,7 +64,7 @@ std::unique_ptr<HelpCommandData> CmdParser::get_help_command_data() const {
     if (!vm.count("help")) {
         return nullptr;
     }
-    
+
     return std::make_unique<HelpCommandData>();
 }
 
@@ -77,8 +72,8 @@ std::unique_ptr<DrawBorderCommandData> CmdParser::get_draw_border_command_data()
     if (!vm.count("draw_border")) {
         return nullptr;
     }
-    
+
     auto data = std::make_unique<DrawBorderCommandData>();
     data->imagePath = vm["draw_border"].as<std::string>();
     return data;
-} 
+}

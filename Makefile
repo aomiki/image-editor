@@ -12,8 +12,8 @@ MODULES_SRC = $(wildcard $(MODULES_DIR)/impls/*.cpp)
 MODULES := $(patsubst %.cpp,%.o,$(MODULES_SRC))
 
 #Command parser
-CMD_PARSER_SRC = $(MODULES_DIR)/cmd_parser.cpp
-CMD_PARSER_OBJ = $(MODULES_DIR)/cmd_parser.o
+#CMD_PARSER_SRC = $(MODULES_DIR)/cmd_parser.cpp
+#CMD_PARSER_OBJ = $(MODULES_DIR)/cmd_parser.o
 
 #Modules that are used both by LODE implementation and directly in CUDA kernels
 MODULES_SHARED_SRC = $(wildcard $(MODULES_DIR)/impls_shared/*.cpp)

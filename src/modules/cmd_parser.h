@@ -1,5 +1,4 @@
-#ifndef CMD_PARSER_H
-#define CMD_PARSER_H
+#pragma once
 
 #include <boost/program_options.hpp>
 #include <string>
@@ -37,11 +36,11 @@ public:
     CommandType get_command_type() const;
 
     std::unique_ptr<CommandData> get_command_data() const;
-    
+
     // Specific command data acquisition functions
     std::unique_ptr<HelpCommandData> get_help_command_data() const;
     std::unique_ptr<DrawBorderCommandData> get_draw_border_command_data() const;
-    
+
 
     void decode_encode_img(std::string filepath, image_codec *codec);
 
@@ -49,5 +48,3 @@ private:
     po::options_description desc;
     po::variables_map vm;
 };
-
-#endif // CMD_PARSER_H 
