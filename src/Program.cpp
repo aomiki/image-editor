@@ -29,9 +29,9 @@ int main()
 
     decode_encode_img(inp_img, &codec);
     transform_image_crop(inp_img, &codec, 100, 100, 100, 100);
-    transform_image_rotate(inp_img, &codec, 270); //пока только на 90, 180, 270 
     transform_image_reflect(inp_img, &codec, true, true);
-    transform_image_shear(inp_img, &codec, 0.3, 0.3);
+    transform_image_shear(inp_img, &codec, 0.3, 0);
+    transform_image_rotate(inp_img, &codec, 25);
 
     std::cout << "that's it" << std::endl;
 }
