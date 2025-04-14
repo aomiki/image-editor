@@ -32,6 +32,6 @@ public:
     // Image conversion operations
     bool convertRGBtoGray(const matrix_rgb& input, matrix_gray& output);
     bool convertGraytoRGB(const matrix_gray& input, matrix_rgb& output);
-
-
 };
+
+#endif // image_ops_cl_h

@@ -17,6 +17,7 @@ bool image_codec_cl::load_image_file(std::vector<unsigned char>* image, const st
 }
 
 bool image_codec_cl::read_info(std::vector<unsigned char>* image) {
+    if (!image) return false;
     // For OpenCL implementation, we'll use the image dimensions
     // that were set during load_image_file
     return true;
@@ -25,14 +26,14 @@ bool image_codec_cl::read_info(std::vector<unsigned char>* image) {
 bool image_codec_cl::decode(std::vector<unsigned char>* image, matrix* mat, ImageColorScheme scheme, unsigned int components) {
     if (!image || !mat) return false;
     
-    // Create matrix with correct dimensions
-    mat->resize(height, width * components);
+    // Resize matrix to match image dimensions
+    mat->resize(width, height);
     
     // Copy data from image to matrix
-    for (unsigned y = 0; y < height; y++) {
-        for (unsigned x = 0; x < width; x++) {
+    for (unsigned int y = 0; y < height; y++) {
+        for (unsigned int x = 0; x < width; x++) {
             unsigned char* pixel = mat->get(x, y);
-            for (unsigned c = 0; c < components; c++) {
+            for (unsigned int c = 0; c < components; c++) {
                 pixel[c] = (*image)[(y * width + x) * components + c];
             }
         }
@@ -44,14 +45,14 @@ bool image_codec_cl::decode(std::vector<unsigned char>* image, matrix* mat, Imag
 bool image_codec_cl::encode(std::vector<unsigned char>* image, matrix* mat, ImageColorScheme scheme, unsigned int components) {
     if (!image || !mat) return false;
     
-    // Resize image vector to hold all pixels
-    image->resize(height * width * components);
+    // Resize image vector to match matrix dimensions
+    image->resize(width * height * components);
     
     // Copy data from matrix to image
-    for (unsigned y = 0; y < height; y++) {
-        for (unsigned x = 0; x < width; x++) {
+    for (unsigned int y = 0; y < height; y++) {
+        for (unsigned int x = 0; x < width; x++) {
             unsigned char* pixel = mat->get(x, y);
-            for (unsigned c = 0; c < components; c++) {
+            for (unsigned int c = 0; c < components; c++) {
                 (*image)[(y * width + x) * components + c] = pixel[c];
             }
         }
