@@ -33,8 +33,14 @@ CUDA_MODULES_LINKED := $(patsubst %,%.linked.o,$(CUDA_MODULES_SRC))
 LDFLAGS_CUDA := -I/opt/cuda/include/ -L/opt/cuda/lib
 LDLIBS_CUDA := -lcuda -lcudart -lnvjpeg_static -lculibos -lcudart -lcudadevrt
 
+#OpenCL implementation
+OPENCL_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/opencl/*.cpp)
+OPENCL_MODULES := $(patsubst %.cpp,%.o,$(OPENCL_MODULES_SRC))
+OPENCL_INCLUDE := $(INC)/CL
+OPENCL_LIBS := -lOpenCL
+
 #General arguments
-LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/
+LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/
 CXXFLAGS := $(LDFLAGS) $(MODULES) $(SRC)/Program.o -g
 
 #Compile with LodePNG implementation (link object files)
@@ -47,6 +53,11 @@ graphics-cuda.out: HW_ACCEL = CUDA_IMPL
 graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(SRC)/Program.o $(CMD_PARSER_OBJ)
 	nvcc $(LDFLAGS) -dlink -o cuda_modules_linked.o $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(LDLIBS_CUDA)
 	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CUDA) cuda_modules_linked.o $(CUDA_MODULES) $(CMD_PARSER_OBJ) $(LDFLAGS_CUDA) $(LDLIBS_CUDA) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-cuda.out -lboost_program_options
+
+#Compile with OpenCL implementation
+graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
+graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(SRC)/Program.o
+	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-opencl.out -lboost_program_options -I$(OPENCL_INCLUDE) $(OPENCL_LIBS)
 
 $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -x cu -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
@@ -61,7 +72,7 @@ $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 
 #Clean build files
 clean:
-	rm -f $(MODULES) $(MODULES_SHARED_CUDA) $(MODULES_SHARED_CUDA_LINKED) $(LODE) $(CUDA_MODULES) $(CUDA_MODULES_LINKED) $(SRC)/Program.o graphics-lode.out graphics-cuda.out
+	rm -f $(MODULES) $(MODULES_SHARED_CUDA) $(MODULES_SHARED_CUDA_LINKED) $(LODE) $(CUDA_MODULES) $(CUDA_MODULES_LINKED) $(SRC)/Program.o graphics-lode.out graphics-cuda.out graphics-opencl.out
 
 #Clean program output files
 clean-output:
