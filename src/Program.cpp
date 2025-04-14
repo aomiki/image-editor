@@ -1,20 +1,38 @@
+
 #include "modules/cmd_parser.h"
 #include "modules/image_codec.h"
+=======
+#include "image_codec.h"
+#include "image_tools.h"
+#include "image_edit.h"
+
 #include <iostream>
 #include <memory>
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
+
 const fs::path result_folder("output");
 const fs::path input_folder("input");
 
+void decode_encode_img(std::string filepath, image_codec* codec);
+
+
+
 int main(int argc, char* argv[]) {
+     std::cout << "Shellow from SSAU!" << std::endl;
+
+    image_codec codec;
     CmdParser parser;
     
     parser.parse_arguments(argc, argv);
 
     CommandType cmdType = parser.get_command_type();
+    decode_encode_img(inp_img, &codec);
+    transform_image_crop(inp_img, &codec);
+    transform_image_rotate(inp_img, &codec, 270); //пока только на 90, 180, 270 
+
 
     switch (cmdType) {
         case CommandType::HELP: {

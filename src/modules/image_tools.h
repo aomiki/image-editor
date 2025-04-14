@@ -14,7 +14,8 @@
 
 enum ImageColorScheme{
     IMAGE_GRAY,
-    IMAGE_RGB
+    IMAGE_RGB,
+    IMAGE_PALETTE
 };
 
 /// @brief Element of RGB matrix
