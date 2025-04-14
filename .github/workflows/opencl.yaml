@@ -12,11 +12,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Dependencies
+        with:
+          submodules: "recursive"
+
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
+            build-essential \
+            make \
             libboost-program-options-dev \
             ocl-icd-opencl-dev \
             opencl-headers \
@@ -27,19 +31,29 @@ jobs:
 
       - name: Install Intel OpenCL Runtime
         run: |
-          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          # Add Intel repository key
+          wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+
+          # Add Intel repository
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
+            | sudo tee /etc/apt/sources.list.d/oneAPI.list
+
+          # Install runtime
           sudo apt-get update
           sudo apt-get install -y intel-oneapi-runtime-opencl
 
-      - name: Check OpenCL Installation
+      - name: Verify OpenCL Installation
         run: |
-          clinfo | head -n 20
-          ls -l /usr/lib/libOpenCL*
-          ls -l /usr/lib/x86_64-linux-gnu/libOpenCL*
+          echo "Available OpenCL implementations:"
+          ls -l /etc/OpenCL/vendors/
 
-      - name: Checkout LodePNG
-        run: git submodule update --init --recursive
+          echo "OpenCL libraries:"
+          ls -l /usr/lib/libOpenCL* /usr/lib/x86_64-linux-gnu/libOpenCL* || true
+
+          echo "OpenCL devices:"
+          clinfo | grep -E "Platform Name|Device Name|Device Available"
 
       - name: Create Output Directory
         run: mkdir -p output
@@ -51,4 +65,15 @@ jobs:
 
       - name: Test OpenCL Version
         run: |
-          ./graphics-opencl.out --help
+          if [ -f ./graphics-opencl.out ]; then
+            ./graphics-opencl.out --help
+          else
+            echo "Error: Executable not found!"
+            exit 1
+          fi
+
+      - name: Check Output Files
+        if: always()
+        run: |
+          echo "Generated files:"
+          find . -name "*.out" -o -name "*.so" -o -name "*.a"
