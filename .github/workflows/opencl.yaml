@@ -20,12 +20,23 @@ jobs:
             libboost-program-options-dev \
             ocl-icd-opencl-dev \
             opencl-headers \
-            clinfo
+            clinfo \
+            wget \
+            gnupg \
+            lsb-release
+
+      - name: Install Intel OpenCL Runtime
+        run: |
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt-get update
+          sudo apt-get install -y intel-oneapi-runtime-opencl
 
       - name: Check OpenCL Installation
         run: |
           clinfo | head -n 20
           ls -l /usr/lib/libOpenCL*
+          ls -l /usr/lib/x86_64-linux-gnu/libOpenCL*
 
       - name: Checkout LodePNG
         run: git submodule update --init --recursive
