@@ -1,7 +1,5 @@
-
 #include "modules/cmd_parser.h"
 #include "modules/image_codec.h"
-=======
 #include "image_codec.h"
 #include "image_tools.h"
 #include "image_edit.h"
@@ -21,18 +19,14 @@ void decode_encode_img(std::string filepath, image_codec* codec);
 
 
 int main(int argc, char* argv[]) {
-     std::cout << "Shellow from SSAU!" << std::endl;
+    std::cout << "Shellow from SSAU!" << std::endl;
 
     image_codec codec;
     CmdParser parser;
-    
+
     parser.parse_arguments(argc, argv);
 
     CommandType cmdType = parser.get_command_type();
-    decode_encode_img(inp_img, &codec);
-    transform_image_crop(inp_img, &codec);
-    transform_image_rotate(inp_img, &codec, 270); //пока только на 90, 180, 270 
-
 
     switch (cmdType) {
         case CommandType::HELP: {
@@ -40,18 +34,37 @@ int main(int argc, char* argv[]) {
             auto helpData = parser.get_help_command_data();
             return 0;
         }
-        
+
         case CommandType::DRAW_BORDER: {
             auto drawBorderData = parser.get_draw_border_command_data();
             if (drawBorderData) {
                 std::cout << "Processing image: " << drawBorderData->imagePath << "\n";
-                image_codec codec;
                 parser.decode_encode_img(drawBorderData->imagePath, &codec);
                 std::cout << drawBorderData->imagePath << " drawed successfully\n";
             }
             return 0;
         }
-        
+
+        case CommandType::CROP: {
+            auto cropData = parser.get_crop_command_data();
+            if (cropData) {
+                std::cout << "Cropping image: " << cropData->imagePath << "\n";
+                transform_image_crop(cropData->imagePath, &codec);
+                std::cout << cropData->imagePath << " cropped successfully\n";
+            }
+            return 0;
+        }
+
+        case CommandType::ROTATE: {
+            auto rotateData = parser.get_rotate_command_data();
+            if (rotateData) {
+                std::cout << "Rotating image: " << rotateData->imagePath << " by " << rotateData->angle << " degrees\n";
+                transform_image_rotate(rotateData->imagePath, &codec, rotateData->angle);
+                std::cout << rotateData->imagePath << " rotated successfully\n";
+            }
+            return 0;
+        }
+
         case CommandType::NONE:
         default:
             std::cout << "No valid command specified\n";

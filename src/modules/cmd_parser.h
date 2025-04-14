@@ -11,18 +11,32 @@ namespace po = boost::program_options;
 enum class CommandType {
     NONE,
     HELP,
-    DRAW_BORDER
+    DRAW_BORDER,
+    CROP,
+    ROTATE
 };
 
-struct CommandData {
+class CommandData {
+public:
     virtual ~CommandData() = default;
 };
 
-struct HelpCommandData : public CommandData {
+class HelpCommandData : public CommandData {};
+
+class DrawBorderCommandData : public CommandData {
+public:
+    std::string imagePath;
 };
 
-struct DrawBorderCommandData : public CommandData {
+class CropCommandData : public CommandData {
+public:
     std::string imagePath;
+};
+
+class RotateCommandData : public CommandData {
+public:
+    std::string imagePath;
+    int angle;
 };
 
 class CmdParser {
@@ -40,6 +54,8 @@ public:
     // Specific command data acquisition functions
     std::unique_ptr<HelpCommandData> get_help_command_data() const;
     std::unique_ptr<DrawBorderCommandData> get_draw_border_command_data() const;
+    std::unique_ptr<CropCommandData> get_crop_command_data() const;
+    std::unique_ptr<RotateCommandData> get_rotate_command_data() const;
 
 
     void decode_encode_img(std::string filepath, image_codec *codec);
