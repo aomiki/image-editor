@@ -12,16 +12,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install General
+      
+      - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libboost-program-options-dev
+          sudo apt-get install -y \
+            libboost-program-options-dev \
+            ocl-icd-opencl-dev \
+            opencl-headers \
+            clinfo
 
-      - name: checkout lode
+      - name: Check OpenCL Installation
+        run: |
+          clinfo | head -n 20
+          ls -l /usr/lib/libOpenCL*
+
+      - name: Checkout LodePNG
         run: git submodule update --init --recursive
 
-      - name: create output
-        run: mkdir output
+      - name: Create Output Directory
+        run: mkdir -p output
 
-      - name: make build OpenCL
-        run: make graphics-opencl.out
+      - name: Build OpenCL Version
+        run: |
+          make clean
+          make graphics-opencl.out
+
+      - name: Test OpenCL Version
+        run: |
+          ./graphics-opencl.out --help

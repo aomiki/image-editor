@@ -37,10 +37,10 @@ LDLIBS_CUDA := -lcuda -lcudart -lnvjpeg_static -lculibos -lcudart -lcudadevrt
 OPENCL_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/opencl/*.cpp)
 OPENCL_MODULES := $(patsubst %.cpp,%.o,$(OPENCL_MODULES_SRC))
 OPENCL_INCLUDE := $(INC)/CL
-OPENCL_LIBS := -lOpenCL
+OPENCL_LIBS := -L/usr/lib -lOpenCL
 
 #General arguments
-LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/
+LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/ -I$(OPENCL_INCLUDE)
 CXXFLAGS := $(LDFLAGS) $(MODULES) $(SRC)/Program.o -g
 
 #Compile with LodePNG implementation (link object files)
@@ -57,7 +57,7 @@ graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(SRC)/Prog
 #Compile with OpenCL implementation
 graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
 graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(SRC)/Program.o
-	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-opencl.out -lboost_program_options -I$(OPENCL_INCLUDE) $(OPENCL_LIBS)
+	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-opencl.out -lboost_program_options $(OPENCL_LIBS)
 
 $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -x cu -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
