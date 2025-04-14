@@ -37,7 +37,7 @@ LDLIBS_CUDA := -lcuda -lcudart -lnvjpeg_static -lculibos -lcudart -lcudadevrt
 OPENCL_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/opencl/*.cpp)
 OPENCL_MODULES := $(patsubst %.cpp,%.o,$(OPENCL_MODULES_SRC))
 OPENCL_INCLUDE := $(INC)/CL
-OPENCL_LIBS := -L/usr/lib -lOpenCL
+OPENCL_LIBS := -lOpenCL
 
 #General arguments
 LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/ -I$(OPENCL_INCLUDE)
