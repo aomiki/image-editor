@@ -16,8 +16,6 @@ const fs::path input_folder("input");
 
 void decode_encode_img(std::string filepath, image_codec* codec);
 
-
-
 int main(int argc, char* argv[]) {
     std::cout << "Shellow from SSAU!" << std::endl;
 
