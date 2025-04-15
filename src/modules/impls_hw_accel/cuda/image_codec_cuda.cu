@@ -95,8 +95,7 @@ void image_codec::encode(std::vector<unsigned char>* img_buffer, matrix* img_mat
 
     // Fill nv_image with image data, by copying data from matrix to GPU
     // docs about nv_image: https://docs.nvidia.com/cuda/nvjpeg/index.html#nvjpeg-encode-examples
-    cuda_log(cudaMalloc((void **)&(nv_image.channel[0]), pitch_0_size * img_matrix->height));
-    cuda_log(cudaMemcpy(nv_image.channel[0], img_matrix->get_arr_interlaced(), pitch_0_size * img_matrix->height, cudaMemcpyDeviceToDevice));
+    nv_image.channel[0] = img_matrix->get_arr_interlaced();
     
     nv_image.pitch[0] = pitch_0_size;
 
@@ -122,9 +121,6 @@ void image_codec::encode(std::vector<unsigned char>* img_buffer, matrix* img_mat
     cuda_log(nvjpegEncodeRetrieveBitstream(nv_handle, nv_enc_state, img_buffer->data(), &length, 0));
 
     cuda_log(cudaStreamSynchronize(stream));
-
-    //clean up
-    cuda_log(cudaFree(nv_image.channel[0]));
 
     nvtxRangeEnd(nvtx_render_encode_mark);
 }
@@ -152,10 +148,7 @@ void image_codec::decode(std::vector<unsigned char>* img_source, matrix* img_mat
     cuda_log(nvjpegDecode(nv_handle, nvjpeg_decoder_state, img_source->data(), img_source->size(), NVJPEG_OUTPUT_RGBI, &imgDesc, NULL));
 
     img_matrix->resize(img_matrix->width, img_matrix->height);
-    cuda_log(cudaMemcpy(img_matrix->get_arr_interlaced(), deviceImgBuff, pitch * img_matrix->height, cudaMemcpyKind::cudaMemcpyDeviceToHost));
-
-    //clean up
-    cuda_log(cudaFree(deviceImgBuff));
+    img_matrix->set_arr_interlaced(deviceImgBuff);
 }
 
 void image_codec::load_image_file(std::vector<unsigned char>* img_buff, std::string image_filepath)

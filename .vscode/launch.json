@@ -33,7 +33,7 @@
         "type": "cuda-gdb",
         "request": "launch",
         "program": "${workspaceFolder}/graphics-cuda.out",
-        "args": [ "--crop", "input/ISS.jpg" ],
+        "args": [ "--gui" ],
         "cwd": "${workspaceFolder}"
     }
     ]
