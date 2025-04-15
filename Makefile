@@ -66,8 +66,8 @@ graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(GUI) $(SR
 
 #Compile with OpenCL implementation
 graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
-graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(SRC)/Program.o
-	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-opencl.out -lboost_program_options $(OPENCL_LIBS)
+graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(GUI) $(SRC)/Program.o
+	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS)
 
 $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -x cu -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
