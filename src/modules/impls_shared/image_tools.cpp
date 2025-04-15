@@ -31,14 +31,6 @@ __shared_func__ unsigned int matrix::size()
     return width * height;
 }
 
-__shared_func__ matrix::~matrix()
-{
-    if (size_interlaced() != 0)
-    {
-        delete [] arr;
-    }
-}
-
 __shared_func__ void matrix::set_arr_interlaced(unsigned char *arr, unsigned width, unsigned height)
 {
     this->arr = arr;

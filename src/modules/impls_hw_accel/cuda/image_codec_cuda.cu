@@ -2,6 +2,7 @@
 #include "nvjpeg.h"
 #include "utils.cuh"
 #include <fstream>
+#include <nvtx3/nvToolsExt.h>
 
 cudaStream_t stream;
 nvjpegHandle_t nv_handle;
@@ -10,16 +11,6 @@ nvjpegJpegState_t nvjpeg_decoder_state;
 
 nvjpegEncoderState_t nv_enc_state;
 nvjpegEncoderParams_t nv_enc_params;
-
-/// @brief for debug
-nvjpegStatus_t last_status = (nvjpegStatus_t)-1;
-cudaError_t last_error = (cudaError_t)-1;
-std::string last_error_desc = "";
-
-void cuda_log(nvjpegStatus_t status)
-{
-    last_status = status;
-}
 
 image_codec::image_codec()
 {
@@ -37,8 +28,8 @@ image_codec::image_codec()
     // set the highest quality
     cuda_log(nvjpegEncoderParamsSetQuality(nv_enc_params, 100, stream));
 
-    //use the best type of JPEG encoding
-    cuda_log(nvjpegEncoderParamsSetEncoding(nv_enc_params, nvjpegJpegEncoding_t::NVJPEG_ENCODING_LOSSLESS_HUFFMAN, stream));
+    //set the type of encoder - progressive for faster data transfer
+    cuda_log(nvjpegEncoderParamsSetEncoding(nv_enc_params, nvjpegJpegEncoding_t::NVJPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN, stream));
 
     //nvjpeg decoding
     cuda_log(nvjpegJpegStateCreate(nv_handle, &nvjpeg_decoder_state));
@@ -81,6 +72,8 @@ ImageInfo image_codec::read_info(std::vector<unsigned char>* img_buffer)
 
 void image_codec::encode(std::vector<unsigned char>* img_buffer, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth)
 {
+    nvtxRangeId_t nvtx_render_encode_mark = nvtxRangeStartA("render_encode");
+
     // code taken from example: https://docs.nvidia.com/cuda/nvjpeg/index.html#nvjpeg-encode-examples
 
     nvjpegImage_t nv_image;
@@ -103,7 +96,7 @@ void image_codec::encode(std::vector<unsigned char>* img_buffer, matrix* img_mat
     // Fill nv_image with image data, by copying data from matrix to GPU
     // docs about nv_image: https://docs.nvidia.com/cuda/nvjpeg/index.html#nvjpeg-encode-examples
     cuda_log(cudaMalloc((void **)&(nv_image.channel[0]), pitch_0_size * img_matrix->height));
-    cuda_log(cudaMemcpy(nv_image.channel[0], img_matrix->get_arr_interlaced(), pitch_0_size * img_matrix->height, cudaMemcpyHostToDevice));
+    cuda_log(cudaMemcpy(nv_image.channel[0], img_matrix->get_arr_interlaced(), pitch_0_size * img_matrix->height, cudaMemcpyDeviceToDevice));
     
     nv_image.pitch[0] = pitch_0_size;
 
@@ -132,6 +125,8 @@ void image_codec::encode(std::vector<unsigned char>* img_buffer, matrix* img_mat
 
     //clean up
     cuda_log(cudaFree(nv_image.channel[0]));
+
+    nvtxRangeEnd(nvtx_render_encode_mark);
 }
 
 void image_codec::decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth)
@@ -180,7 +175,7 @@ void image_codec::load_image_file(std::vector<unsigned char>* img_buff, std::str
 
     oInputStream.close();
 }
-
+        
 void image_codec::save_image_file(std::vector<unsigned char>* img_buff, std::string image_filepath)
 {
     std::ofstream output_file(image_filepath+".jpeg", std::ios::out | std::ios::binary);
