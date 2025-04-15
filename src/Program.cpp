@@ -8,6 +8,9 @@
 #include <memory>
 #include <filesystem>
 
+#include "gui/mainwindow.h"
+#include <QApplication>
+
 namespace fs = std::filesystem;
 
 
@@ -18,6 +21,14 @@ void decode_encode_img(std::string filepath, image_codec* codec);
 
 int main(int argc, char* argv[]) {
     std::cout << "Shellow from SSAU!" << std::endl;
+
+    if (argc > 1 && strcmp(argv[1], "--gui") == 0)
+    {
+        QApplication a(argc, argv);
+        MainWindow w;
+        w.show();
+        return a.exec();
+    }
 
     image_codec codec;
     CmdParser parser;

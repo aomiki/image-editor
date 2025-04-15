@@ -13,9 +13,16 @@ struct ImageInfo {
     unsigned int height;
 };
 
+enum ImgFormat {
+    JPEG,
+    PNG 
+};
+
 class image_codec {
     public:
         image_codec();
+
+        ImgFormat native_format();
 
         ImageInfo read_info(std::vector<unsigned char>* img_buffer);
 

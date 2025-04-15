@@ -21,6 +21,16 @@ MODULES_SHARED_CPP := $(patsubst %.cpp,%.o,$(MODULES_SHARED_SRC))
 MODULES_SHARED_CUDA := $(patsubst %.cpp,%.cu.o,$(MODULES_SHARED_SRC))
 MODULES_SHARED_CUDA_LINKED := $(patsubst %,%.linked.o,$(MODULES_SHARED_SRC))
 
+QT_DIR=/usr/lib/qt6
+
+GUI_DIR=$(SRC)/gui
+#GUI
+GUI_SRC=$(GUI_DIR)/mainwindow.cpp $(GUI_DIR)/moc_mainwindow.cpp
+GUI=$(patsubst %.cpp,%.o,$(GUI_SRC))
+
+LDFLAGS_GUI=-I/usr/include/qt6 -I/usr/include/qt6/QtGui -I/usr/include/qt6/QtCore -I/usr/include/qt6/QtWidgets -I/usr/lib/qt6/mkspecs/linux-g++ -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -fPIC
+LD_LIBS_GUI=-lQt6Core -lQt6Gui -lQt6Widgets
+
 #LodePNG implementation
 LODE_SRC := $(wildcard $(INC)/lodepng/lodepng.cpp $(MODULES_DIR)/impls_cpu/*.cpp)
 LODE :=  $(patsubst %.cpp,%.o,$(LODE_SRC))
@@ -41,18 +51,18 @@ OPENCL_LIBS := -L/usr/lib/x86_64-linux-gnu -lOpenCL
 
 #General arguments
 LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/ -I$(OPENCL_INCLUDE)
-CXXFLAGS := $(LDFLAGS) $(MODULES) $(SRC)/Program.o -g
+CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g
 
 #Compile with LodePNG implementation (link object files)
 graphics-lode.out: HW_ACCEL = LODE_IMPL
-graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(SRC)/Program.o $(CMD_PARSER_OBJ)
-	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-lode.out -lboost_program_options
+graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(GUI) $(SRC)/Program.o $(CMD_PARSER_OBJ)
+	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-lode.out -lboost_program_options
 
 #Compile with CUDA implementation
 graphics-cuda.out: HW_ACCEL = CUDA_IMPL
-graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(SRC)/Program.o $(CMD_PARSER_OBJ)
+graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(GUI) $(SRC)/Program.o $(CMD_PARSER_OBJ)
 	nvcc $(LDFLAGS) -dlink -o cuda_modules_linked.o $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(LDLIBS_CUDA)
-	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CUDA) cuda_modules_linked.o $(CUDA_MODULES) $(CMD_PARSER_OBJ) $(LDFLAGS_CUDA) $(LDLIBS_CUDA) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-cuda.out -lboost_program_options
+	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CUDA) cuda_modules_linked.o $(CUDA_MODULES) $(CMD_PARSER_OBJ) $(LDFLAGS_CUDA) $(LD_LIBS_GUI) $(LDLIBS_CUDA) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-cuda.out -lboost_program_options
 
 #Compile with OpenCL implementation
 graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
@@ -63,16 +73,24 @@ $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -x cu -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
 
 #Compile CUDA implementation (target that invokes if *.o with *.cu source is required by other targets)
-%.o: %.cu
+%.o: %.cuz
 	nvcc $(LDFLAGS) -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
+
+$(GUI_DIR)/moc_mainwindow.cpp: $(GUI_DIR)/mainwindow.h $(GUI_DIR)/ui_mainwindow.h
+	$(QT_DIR)/moc -I modules/ -I include/lodepng/ $< -o $@
+
+$(GUI_DIR)/ui_mainwindow.h: $(GUI_DIR)/mainwindow.ui
+	$(QT_DIR)/uic $(GUI_DIR)/mainwindow.ui -o $(GUI_DIR)/ui_mainwindow.h 
+
+$(GUI_DIR)/mainwindow.o: $(GUI_DIR)/ui_mainwindow.h
 
 #Target that invokes if *.o file with *.cpp source is required by other targets
 %.o: %.cpp
-	$(CXX) $(LDFLAGS) $(LDFLAGS_CUDA) $(LDLIBS_CUDA) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -g -o $@ -c $^
+	$(CXX) $(LDFLAGS) $(LDFLAGS_CUDA) $(LDFLAGS_GUI) $(LDLIBS_CUDA) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -g -o $@ -c $<
 
 #Clean build files
 clean:
-	rm -f $(MODULES) $(MODULES_SHARED_CUDA) $(MODULES_SHARED_CUDA_LINKED) $(LODE) $(CUDA_MODULES) $(CUDA_MODULES_LINKED) $(SRC)/Program.o graphics-lode.out graphics-cuda.out graphics-opencl.out
+	rm -f $(MODULES) $(MODULES_SHARED_CUDA) $(MODULES_SHARED_CUDA_LINKED) $(LODE) $(CUDA_MODULES) $(CUDA_MODULES_LINKED) $(SRC)/Program.o $(GUI_DIR)/mainwindow.o $(GUI_DIR)/moc_mainwindow.cpp $(GUI_DIR)/ui_mainwindow.h graphics-lode.out graphics-cuda.out graphics-opencl.out
 
 #Clean program output files
 clean-output:
