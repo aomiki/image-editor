@@ -36,6 +36,11 @@ inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType colo
 image_codec::image_codec()
 {}
 
+ImgFormat image_codec::native_format()
+{
+    return PNG;
+}
+
 ImageInfo image_codec::read_info(std::vector<unsigned char>* img_buffer)
 {
     LodePNGState state;
