@@ -1,206 +1,227 @@
-#include <CL/cl2.hpp>
+#include <CL/opencl.hpp>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <cstring>
-#include "lodepng.h"
 #include "image_codec.h"
-
-// Исходный код OpenCL-ядер для декодирования и кодирования
-const char* codecKernelSource = R"CLC(
-__kernel void decode_kernel(__global const unsigned char* src,
-                            __global unsigned char* dst,
-                            const unsigned width,
-                            const unsigned height)
-{
-    int x = get_global_id(0);
-    int y = get_global_id(1);
-    if (x < width && y < height) {
-        int index = (y * width + x) * 3;
-        // Простейшее копирование для 3-х компонент RGB
-        dst[index]   = src[index];
-        dst[index+1] = src[index+1];
-        dst[index+2] = src[index+2];
-    }
-}
-
-__kernel void encode_kernel(__global const unsigned char* src,
-                            __global unsigned char* dst,
-                            const unsigned width,
-                            const unsigned height)
-{
-    int x = get_global_id(0);
-    int y = get_global_id(1);
-    if (x < width && y < height) {
-        int index = (y * width + x) * 3;
-        // Простейшее копирование для 3-х компонент RGB
-        dst[index]   = src[index];
-        dst[index+1] = src[index+1];
-        dst[index+2] = src[index+2];
-    }
-}
-)CLC";
 
 class image_codec_cl : public image_codec {
 private:
     unsigned width;
     unsigned height;
     cl::Context context;
-    cl::CommandQueue queue;
+    cl::Device device;
     cl::Program program;
+    cl::CommandQueue queue;
+    bool initialized;
+
+    // Исходный код OpenCL-ядер для декодирования и кодирования
+    const char* codecKernelSource = R"CLC(
+    __kernel void decode_kernel(__global const unsigned char* src,
+                              __global unsigned char* dst,
+                              const unsigned width,
+                              const unsigned height)
+    {
+        int x = get_global_id(0);
+        int y = get_global_id(1);
+        if (x < width && y < height) {
+            int index = (y * width + x) * 3;
+            // Простейшее копирование для 3-х компонент RGB
+            dst[index] = src[index];
+            dst[index + 1] = src[index + 1];
+            dst[index + 2] = src[index + 2];
+        }
+    }
+
+    __kernel void encode_kernel(__global const unsigned char* src,
+                              __global unsigned char* dst,
+                              const unsigned width,
+                              const unsigned height)
+    {
+        int x = get_global_id(0);
+        int y = get_global_id(1);
+        if (x < width && y < height) {
+            int index = (y * width + x) * 3;
+            // Простейшее копирование для 3-х компонент RGB
+            dst[index] = src[index];
+            dst[index + 1] = src[index + 1];
+            dst[index + 2] = src[index + 2];
+        }
+    }
+    )CLC";
+
+    bool initializeOpenCL() {
+        if (initialized) return true;
+
+        try {
+            // Получаем список доступных платформ
+            std::vector<cl::Platform> platforms;
+            cl::Platform::get(&platforms);
+            if (platforms.empty()) {
+                std::cerr << "No OpenCL platforms found" << std::endl;
+                return false;
+            }
+
+            // Выбираем первую платформу
+            cl::Platform platform = platforms[0];
+
+            // Получаем список устройств
+            std::vector<cl::Device> devices;
+            platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
+            if (devices.empty()) {
+                std::cerr << "No GPU devices found" << std::endl;
+                return false;
+            }
+
+            // Выбираем первое устройство
+            device = devices[0];
+
+            // Создаём контекст
+            context = cl::Context(device);
+
+            // Создаём очередь команд
+            queue = cl::CommandQueue(context, device);
+
+            // Создаём и компилируем программу
+            cl::Program::Sources sources;
+            sources.push_back({codecKernelSource, std::strlen(codecKernelSource)});
+            program = cl::Program(context, sources);
+            if (program.build({device}) != CL_SUCCESS) {
+                std::cerr << "Error building program: " 
+                         << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
+                return false;
+            }
+
+            initialized = true;
+            return true;
+        } catch (const std::exception& e) {
+            std::cerr << "OpenCL error: " << e.what() << std::endl;
+            return false;
+        }
+    }
 
 public:
-    image_codec_cl() : image_codec(), width(0), height(0) {
-        // Получаем платформы OpenCL и выбираем первую доступную
-        std::vector<cl::Platform> platforms;
-        cl::Platform::get(&platforms);
-        if (platforms.empty()) {
-            std::cerr << "Не найдено OpenCL-платформ" << std::endl;
-            exit(1);
-        }
-        cl::Platform platform = platforms[0];
-
-        // Пытаемся получить GPU-устройство, при отсутствии используем CPU
-        std::vector<cl::Device> devices;
-        platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
-        if (devices.empty()) {
-            std::cerr << "GPU-устройств не найдено, пробуем CPU" << std::endl;
-            platform.getDevices(CL_DEVICE_TYPE_CPU, &devices);
-            if (devices.empty()) {
-                std::cerr << "Не найдено ни GPU, ни CPU-устройств" << std::endl;
-                exit(1);
-            }
-        }
-        cl::Device device = devices[0];
-
-        // Создаём OpenCL-контекст и очередь команд
-        context = cl::Context(device);
-        queue = cl::CommandQueue(context, device);
-
-        // Создаём и компилируем программу на основе исходного кода ядер
-        cl::Program::Sources sources;
-        sources.push_back({codecKernelSource, std::strlen(codecKernelSource)});
-        program = cl::Program(context, sources);
-        if (program.build({device}) != CL_SUCCESS) {
-            std::cerr << "Ошибка компиляции OpenCL-программы: "
-                      << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
-            exit(1);
-        }
-    }
-
+    image_codec_cl() : width(0), height(0), initialized(false) {}
     ~image_codec_cl() {}
 
-    // Загрузка PNG-файла с использованием lodepng
     void load_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) {
-        unsigned error = lodepng::decode(*png_buffer, width, height, image_filepath);
-        if (error) {
-            std::cerr << "Ошибка загрузки изображения: "
-                      << lodepng_error_text(error) << std::endl;
+        // Читаем файл напрямую
+        std::ifstream file(image_filepath, std::ios::binary);
+        if (!file) {
+            std::cerr << "Error opening file: " << image_filepath << std::endl;
+            return;
         }
+
+        // Получаем размер файла
+        file.seekg(0, std::ios::end);
+        size_t size = file.tellg();
+        file.seekg(0, std::ios::beg);
+
+        // Читаем данные
+        png_buffer->resize(size);
+        file.read(reinterpret_cast<char*>(png_buffer->data()), size);
+        file.close();
+
+        // Устанавливаем размеры изображения (предполагаем RGB)
+        width = 0;  // Нужно будет определить из заголовка файла
+        height = 0; // Нужно будет определить из заголовка файла
     }
 
-    // Считывание информации об изображении
     ImageInfo read_info(std::vector<unsigned char>* img_buffer) {
         ImageInfo info;
         info.width = width;
         info.height = height;
-        info.colorScheme = IMAGE_RGB;  // По умолчанию RGB
-        info.bit_depth = 8;            // По умолчанию 8-бит
+        info.colorScheme = IMAGE_RGB;
+        info.bit_depth = 8;
         return info;
     }
 
-    // Декодирование (копирование данных изображения в матрицу) с использованием OpenCL
-    void decode(std::vector<unsigned char>* img_source, matrix* img_matrix,
-                ImageColorScheme colorScheme, unsigned bit_depth) {
+    void decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth) {
         if (!img_source || !img_matrix) return;
+        
+        if (!initializeOpenCL()) return;
 
-        // Изменяем размер матрицы согласно габаритам изображения
-        img_matrix->resize(width, height);
+        try {
+            // Создаём буферы OpenCL
+            cl::Buffer src_buffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                img_source->size(), img_source->data());
+            
+            // Создаём буфер для результата
+            cl::Buffer dst_buffer(context, CL_MEM_WRITE_ONLY,
+                                img_matrix->size() * sizeof(unsigned char));
 
-        // Создаём OpenCL-буфер для исходных данных изображения
-        cl::Buffer bufferSrc(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                               img_source->size() * sizeof(unsigned char), img_source->data());
-        // Подготовка буфера для результата
-        size_t totalSize = width * height * 3;
-        std::vector<unsigned char> result(totalSize, 0);
-        cl::Buffer bufferDst(context, CL_MEM_WRITE_ONLY, totalSize * sizeof(unsigned char));
+            // Создаём ядро
+            cl::Kernel kernel(program, "decode_kernel");
 
-        // Настраиваем и запускаем ядро для декодирования
-        cl::Kernel kernel(program, "decode_kernel");
-        kernel.setArg(0, bufferSrc);
-        kernel.setArg(1, bufferDst);
-        kernel.setArg(2, width);
-        kernel.setArg(3, height);
+            // Устанавливаем аргументы
+            kernel.setArg(0, src_buffer);
+            kernel.setArg(1, dst_buffer);
+            kernel.setArg(2, width);
+            kernel.setArg(3, height);
 
-        cl::NDRange global(width, height);
-        queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
-        queue.finish();
+            // Запускаем ядро
+            queue.enqueueNDRangeKernel(kernel, cl::NullRange,
+                                     cl::NDRange(width, height),
+                                     cl::NullRange);
 
-        // Считываем результат из буфера
-        queue.enqueueReadBuffer(bufferDst, CL_TRUE, 0, totalSize * sizeof(unsigned char), result.data());
+            // Читаем результат
+            queue.enqueueReadBuffer(dst_buffer, CL_TRUE, 0,
+                                  img_matrix->size() * sizeof(unsigned char),
+                                  img_matrix->arr);
 
-        // Переносим данные в матрицу (здесь предполагается, что matrix обеспечивает метод get(x,y) для доступа к пикселю)
-        for (unsigned int y = 0; y < height; y++) {
-            for (unsigned int x = 0; x < width; x++) {
-                unsigned char* pixel = img_matrix->get(x, y);
-                int index = (y * width + x) * 3;
-                pixel[0] = result[index];
-                pixel[1] = result[index + 1];
-                pixel[2] = result[index + 2];
-            }
+        } catch (const std::exception& e) {
+            std::cerr << "OpenCL error: " << e.what() << std::endl;
         }
     }
 
-    // Кодирование (копирование данных из матрицы в буфер изображения) с использованием OpenCL
-    void encode(std::vector<unsigned char>* img_buffer, matrix* img_matrix,
-                ImageColorScheme colorScheme, unsigned bit_depth) {
+    void encode(std::vector<unsigned char>* img_buffer, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth) {
         if (!img_buffer || !img_matrix) return;
+        
+        if (!initializeOpenCL()) return;
 
-        // Сначала копируем данные из матрицы в вектор (предполагается, что размеры матрицы равны width x height)
-        size_t totalSize = width * height * 3;
-        std::vector<unsigned char> srcData(totalSize, 0);
-        for (unsigned int y = 0; y < height; y++) {
-            for (unsigned int x = 0; x < width; x++) {
-                unsigned char* pixel = img_matrix->get(x, y);
-                int index = (y * width + x) * 3;
-                srcData[index]     = pixel[0];
-                srcData[index + 1] = pixel[1];
-                srcData[index + 2] = pixel[2];
-            }
+        try {
+            // Создаём буферы OpenCL
+            cl::Buffer src_buffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+                                img_matrix->size() * sizeof(unsigned char),
+                                img_matrix->arr);
+            
+            // Создаём буфер для результата
+            cl::Buffer dst_buffer(context, CL_MEM_WRITE_ONLY,
+                                img_buffer->size());
+
+            // Создаём ядро
+            cl::Kernel kernel(program, "encode_kernel");
+
+            // Устанавливаем аргументы
+            kernel.setArg(0, src_buffer);
+            kernel.setArg(1, dst_buffer);
+            kernel.setArg(2, width);
+            kernel.setArg(3, height);
+
+            // Запускаем ядро
+            queue.enqueueNDRangeKernel(kernel, cl::NullRange,
+                                     cl::NDRange(width, height),
+                                     cl::NullRange);
+
+            // Читаем результат
+            queue.enqueueReadBuffer(dst_buffer, CL_TRUE, 0,
+                                  img_buffer->size(),
+                                  img_buffer->data());
+
+        } catch (const std::exception& e) {
+            std::cerr << "OpenCL error: " << e.what() << std::endl;
         }
-
-        // Создаём OpenCL-буфер для исходных данных матрицы
-        cl::Buffer bufferSrc(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                               srcData.size() * sizeof(unsigned char), srcData.data());
-        // Буфер для результата кодирования
-        std::vector<unsigned char> result(totalSize, 0);
-        cl::Buffer bufferDst(context, CL_MEM_WRITE_ONLY, totalSize * sizeof(unsigned char));
-
-        // Настройка и запуск OpenCL-ядра для кодирования
-        cl::Kernel kernel(program, "encode_kernel");
-        kernel.setArg(0, bufferSrc);
-        kernel.setArg(1, bufferDst);
-        kernel.setArg(2, width);
-        kernel.setArg(3, height);
-
-        cl::NDRange global(width, height);
-        queue.enqueueNDRangeKernel(kernel, cl::NullRange, global, cl::NullRange);
-        queue.finish();
-
-        // Считываем результат кодирования
-        queue.enqueueReadBuffer(bufferDst, CL_TRUE, 0, totalSize * sizeof(unsigned char), result.data());
-
-        // Записываем данные в вектор для дальнейшего сохранения
-        img_buffer->resize(result.size());
-        std::copy(result.begin(), result.end(), img_buffer->begin());
     }
 
-    // Сохранение PNG-файла с использованием lodepng
     void save_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) {
-        unsigned error = lodepng::encode(image_filepath, *png_buffer, width, height);
-        if (error) {
-            std::cerr << "Ошибка сохранения изображения: "
-                      << lodepng_error_text(error) << std::endl;
+        // Записываем файл напрямую
+        std::ofstream file(image_filepath, std::ios::binary);
+        if (!file) {
+            std::cerr << "Error opening file for writing: " << image_filepath << std::endl;
+            return;
         }
+
+        file.write(reinterpret_cast<const char*>(png_buffer->data()), png_buffer->size());
+        file.close();
     }
 };

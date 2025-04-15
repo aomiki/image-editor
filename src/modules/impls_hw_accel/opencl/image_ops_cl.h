@@ -2,7 +2,7 @@
 #ifndef image_ops_cl_h
 #define image_ops_cl_h
 
-#include "CL/cl.h"
+#include <CL/opencl.hpp>
 #include <vector>
 #include "image_tools.h"
 
