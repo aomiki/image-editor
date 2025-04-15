@@ -36,7 +36,7 @@ LODE_SRC := $(wildcard $(INC)/lodepng/lodepng.cpp $(MODULES_DIR)/impls_cpu/*.cpp
 LODE :=  $(patsubst %.cpp,%.o,$(LODE_SRC))
 
 #CUDA implementation
-CUDA_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/*.cu)
+CUDA_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/cuda/*.cu)
 CUDA_MODULES := $(patsubst %.cu,%.o,$(CUDA_MODULES_SRC))
 CUDA_MODULES_LINKED := $(patsubst %,%.linked.o,$(CUDA_MODULES_SRC))
 
@@ -73,7 +73,7 @@ $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -x cu -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
 
 #Compile CUDA implementation (target that invokes if *.o with *.cu source is required by other targets)
-%.o: %.cuz
+%.o: %.cu
 	nvcc $(LDFLAGS) -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
 
 $(GUI_DIR)/moc_mainwindow.cpp: $(GUI_DIR)/mainwindow.h $(GUI_DIR)/ui_mainwindow.h
