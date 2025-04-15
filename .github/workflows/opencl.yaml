@@ -1,0 +1,79 @@
+name: Build with OpenCL
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            make \
+            libboost-program-options-dev \
+            ocl-icd-opencl-dev \
+            opencl-headers \
+            clinfo \
+            wget \
+            gnupg \
+            lsb-release
+
+      - name: Install Intel OpenCL Runtime
+        run: |
+          # Add Intel repository key
+          wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
+            | gpg --dearmor \
+            | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+
+          # Add Intel repository
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
+            | sudo tee /etc/apt/sources.list.d/oneAPI.list
+
+          # Install runtime
+          sudo apt-get update
+          sudo apt-get install -y intel-oneapi-runtime-opencl
+
+      - name: Verify OpenCL Installation
+        run: |
+          echo "Available OpenCL implementations:"
+          ls -l /etc/OpenCL/vendors/
+
+          echo "OpenCL libraries:"
+          ls -l /usr/lib/libOpenCL* /usr/lib/x86_64-linux-gnu/libOpenCL* || true
+
+          echo "OpenCL devices:"
+          clinfo | grep -E "Platform Name|Device Name|Device Available"
+
+      - name: Create Output Directory
+        run: mkdir -p output
+
+      - name: Build OpenCL Version
+        run: |
+          make clean
+          make graphics-opencl.out
+
+      - name: Test OpenCL Version
+        run: |
+          if [ -f ./graphics-opencl.out ]; then
+            ./graphics-opencl.out --help
+          else
+            echo "Error: Executable not found!"
+            exit 1
+          fi
+
+      - name: Check Output Files
+        if: always()
+        run: |
+          echo "Generated files:"
+          find . -name "*.out" -o -name "*.so" -o -name "*.a"

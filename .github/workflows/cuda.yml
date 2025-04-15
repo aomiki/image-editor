@@ -1,37 +1,34 @@
-name: Build with CUDA
-
+name: Build with CUDA and Boost
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
-
+    branches: ["main"]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - uses: Jimver/cuda-toolkit@v0.2.22
-      id: cuda-toolkit
-      with:
-        cuda: '12.5.0'
-        method: 'network'
-        sub-packages: '["nvcc", "cudart", "cudart-dev"]'
-        non-cuda-sub-packages: '["cuda", "libnvjpeg"]'
-
-    - run: echo "Installed cuda version is ${{steps.cuda-toolkit.outputs.cuda}}"
-
-    - run: echo "Cuda install location ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-
-    - run: echo "Cuda path $CUDA_PATH"
-    - run: ls "$CUDA_PATH"
-    - run: ls "$CUDA_PATH/lib64"
-
-    - run: nvcc -V
-
-    - name: create output
-      run: mkdir output
-
-    - name: make build CUDA
-      run: make LIBRARY_PATH="$CUDA_PATH/lib64" graphics-cuda.out
+      - uses: actions/checkout@v4
+      - uses: Jimver/cuda-toolkit@v0.2.22
+        id: cuda-toolkit
+        with:
+          cuda: "12.5.0"
+          method: "network"
+          sub-packages: '["nvcc", "cudart", "cudart-dev"]'
+          non-cuda-sub-packages: '["cuda", "libnvjpeg"]'
+      - name: Install Boost
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-program-options-dev
+      - name: checkout submodules
+        run: git submodule update --init --recursive
+      - run: echo "Installed cuda version is ${{steps.cuda-toolkit.outputs.cuda}}"
+      - run: echo "Cuda install location ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+      - run: echo "Cuda path $CUDA_PATH"
+      - run: ls "$CUDA_PATH"
+      - run: ls "$CUDA_PATH/lib64"
+      - run: nvcc -V
+      - name: create output
+        run: mkdir output
+      - name: make build CUDA
+        run: make LIBRARY_PATH="$CUDA_PATH/lib64" graphics-cuda.out
