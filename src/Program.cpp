@@ -18,10 +18,8 @@ void decode_encode_img(std::string filepath, image_codec* codec);
 
 int main(int argc, char* argv[]) {
     std::cout << "Shellow from SSAU!" << std::endl;
-
     image_codec codec;
     CmdParser parser;
-
     parser.parse_arguments(argc, argv);
 
     CommandType cmdType = parser.get_command_type();
@@ -37,7 +35,7 @@ int main(int argc, char* argv[]) {
             auto drawBorderData = parser.get_draw_border_command_data();
             if (drawBorderData) {
                 std::cout << "Processing image: " << drawBorderData->imagePath << "\n";
-                parser.decode_encode_img(drawBorderData->imagePath, &codec);
+                decode_encode_img(drawBorderData->imagePath, &codec);
                 std::cout << drawBorderData->imagePath << " drawed successfully\n";
             }
             return 0;
