@@ -21,23 +21,20 @@ void decode_encode_img(std::string filepath, image_codec* codec);
 
 int main(int argc, char* argv[]) {
     std::cout << "Shellow from SSAU!" << std::endl;
-
-    if (argc > 1 && strcmp(argv[1], "--gui") == 0)
-    {
-        QApplication a(argc, argv);
-        MainWindow w;
-        w.show();
-        return a.exec();
-    }
-
-    image_codec codec;
     CmdParser parser;
-
     parser.parse_arguments(argc, argv);
-
     CommandType cmdType = parser.get_command_type();
 
+    image_codec codec;
+
     switch (cmdType) {
+        case CommandType::GUI: {
+            QApplication a(argc, argv);
+            MainWindow w;
+            w.show();
+            return a.exec();
+        }
+
         case CommandType::HELP: {
             std::cout << "Help requested\n";
             auto helpData = parser.get_help_command_data();

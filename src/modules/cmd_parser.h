@@ -13,7 +13,8 @@ enum class CommandType {
     HELP,
     DRAW_BORDER,
     CROP,
-    ROTATE
+    ROTATE,
+    GUI
 };
 
 class CommandData {

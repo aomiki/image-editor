@@ -7,6 +7,7 @@ extern void decode_encode_img(std::string filepath, image_codec *codec);
 CmdParser::CmdParser() : desc("Allowed options") {
     desc.add_options()
         ("help", "produce help message")
+        ("gui", "open GUI window")
         ("draw_border", po::value<std::string>(), "image in input directory to draw border on")
         ("crop", po::value<std::string>(), "image in input directory to crop")
         ("rotate", po::value<std::string>(), "image in input directory to rotate")
@@ -41,6 +42,9 @@ po::variables_map CmdParser::parse_arguments(int ac, char* av[]) {
 CommandType CmdParser::get_command_type() const {
     if (vm.count("help")) {
         return CommandType::HELP;
+    }
+    else if (vm.count("gui")) {
+        return CommandType::GUI;
     }
     else if (vm.count("draw_border")) {
         return CommandType::DRAW_BORDER;
