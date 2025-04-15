@@ -3,6 +3,14 @@
 #Main compiler
 CXX = g++
 
+OPTIMIZATION_FLAGS_RELEASE= -march=native -Ofast
+OPTIMIZATION_FLAGS_DEBUG= -O0 -g
+OPTIMIZATION_FLAGS=$(OPTIMIZATION_FLAGS_RELEASE)
+
+NV_OPTIMIZATION_FLAGS_RELEASE= -use_fast_math -v
+NV_OPTIMIZATION_FLAGS_DEBUG= --debug --device-debug --cudart shared
+NV_OPTIMIZATION_FLAGS= $(NV_OPTIMIZATION_FLAGS_RELEASE)
+
 INC=include
 SRC=src
 MODULES_DIR=$(SRC)/modules
@@ -56,25 +64,25 @@ CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g
 #Compile with LodePNG implementation (link object files)
 graphics-lode.out: HW_ACCEL = LODE_IMPL
 graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(GUI) $(SRC)/Program.o $(CMD_PARSER_OBJ)
-	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-lode.out -lboost_program_options
+	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-lode.out -lboost_program_options
 
 #Compile with CUDA implementation
 graphics-cuda.out: HW_ACCEL = CUDA_IMPL
 graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(GUI) $(SRC)/Program.o $(CMD_PARSER_OBJ)
-	nvcc $(LDFLAGS) -dlink -o cuda_modules_linked.o $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(LDLIBS_CUDA)
-	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CUDA) cuda_modules_linked.o $(CUDA_MODULES) $(CMD_PARSER_OBJ) $(LDFLAGS_CUDA) $(LD_LIBS_GUI) $(LDLIBS_CUDA) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-cuda.out -lboost_program_options
+	nvcc $(LDFLAGS) -arch=native -dlink -o cuda_modules_linked.o $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(LDLIBS_CUDA)
+	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CUDA) cuda_modules_linked.o $(CUDA_MODULES) $(CMD_PARSER_OBJ) $(LDFLAGS_CUDA) $(LD_LIBS_GUI) $(LDLIBS_CUDA) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-cuda.out -lboost_program_options
 
 #Compile with OpenCL implementation
 graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
 graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(GUI) $(SRC)/Program.o
-	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS)
+	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS)
 
 $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
-	nvcc $(LDFLAGS) -x cu -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
+	nvcc $(LDFLAGS) -arch=native -x cu -rdc=true $(NV_OPTIMIZATION_FLAGS) -o $@ -c $^
 
 #Compile CUDA implementation (target that invokes if *.o with *.cu source is required by other targets)
 %.o: %.cu
-	nvcc $(LDFLAGS) -rdc=true --debug --device-debug --cudart shared -o $@ -c $^
+	nvcc $(LDFLAGS) -arch=native -rdc=true $(NV_OPTIMIZATION_FLAGS) -o $@ -c $^
 
 $(GUI_DIR)/moc_mainwindow.cpp: $(GUI_DIR)/mainwindow.h $(GUI_DIR)/ui_mainwindow.h
 	$(QT_DIR)/moc -I modules/ -I include/lodepng/ $< -o $@
@@ -86,7 +94,7 @@ $(GUI_DIR)/mainwindow.o: $(GUI_DIR)/ui_mainwindow.h
 
 #Target that invokes if *.o file with *.cpp source is required by other targets
 %.o: %.cpp
-	$(CXX) $(LDFLAGS) $(LDFLAGS_CUDA) $(LDFLAGS_GUI) $(LDLIBS_CUDA) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic -O0 -g -o $@ -c $<
+	$(CXX) $(LDFLAGS) $(LDFLAGS_CUDA) $(LDFLAGS_GUI) $(LDLIBS_CUDA) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o $@ -c $<
 
 #Clean build files
 clean:
