@@ -1,7 +1,4 @@
 #pragma once
-#ifndef image_ops_cl_h
-#define image_ops_cl_h
-
 #include <CL/opencl.hpp>
 #include <vector>
 #include "image_tools.h"
@@ -33,5 +30,3 @@ public:
     bool convertRGBtoGray(const matrix_rgb& input, matrix_gray& output);
     bool convertGraytoRGB(const matrix_gray& input, matrix_rgb& output);
 };
-
-#endif // image_ops_cl_h
