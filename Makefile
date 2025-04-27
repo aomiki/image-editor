@@ -29,7 +29,7 @@ MODULES_SHARED_CPP := $(patsubst %.cpp,%.o,$(MODULES_SHARED_SRC))
 MODULES_SHARED_CUDA := $(patsubst %.cpp,%.cu.o,$(MODULES_SHARED_SRC))
 MODULES_SHARED_CUDA_LINKED := $(patsubst %,%.linked.o,$(MODULES_SHARED_SRC))
 
-QT_DIR=/usr/lib/qt6
+QT_DIR=$(shell qmake6 -query QT_HOST_LIBEXECS)
 
 GUI_DIR=$(SRC)/gui
 #GUI
