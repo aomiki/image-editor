@@ -15,7 +15,7 @@ jobs:
       - name: Install General
         run: |
           sudo apt-get update
-          sudo apt-get install -y libboost-program-options-dev
+          sudo apt-get install -y libboost-program-options-dev qt6-base-dev
 
       - name: checkout lode
         run: git submodule update --init --recursive
