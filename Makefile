@@ -30,13 +30,14 @@ MODULES_SHARED_CUDA := $(patsubst %.cpp,%.cu.o,$(MODULES_SHARED_SRC))
 MODULES_SHARED_CUDA_LINKED := $(patsubst %,%.linked.o,$(MODULES_SHARED_SRC))
 
 QT_DIR=$(shell qmake6 -query QT_HOST_LIBEXECS)
+QT_HEADERS_DIR=$(shell qmake6 -query QT_INSTALL_HEADERS)
 
 GUI_DIR=$(SRC)/gui
 #GUI
 GUI_SRC=$(GUI_DIR)/mainwindow.cpp $(GUI_DIR)/moc_mainwindow.cpp
 GUI=$(patsubst %.cpp,%.o,$(GUI_SRC))
 
-LDFLAGS_GUI=-I/usr/include/qt6 -I/usr/include/qt6/QtGui -I/usr/include/qt6/QtCore -I/usr/include/qt6/QtWidgets -I/usr/lib/qt6/mkspecs/linux-g++ -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -fPIC
+LDFLAGS_GUI=-I/$(QT_HEADERS_DIR) -I$(QT_HEADERS_DIR)/QtGui -I$(QT_HEADERS_DIR)/QtCore -I$(QT_HEADERS_DIR)/QtWidgets -I/usr/lib/qt6/mkspecs/linux-g++ -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -fPIC
 LD_LIBS_GUI=-lQt6Core -lQt6Gui -lQt6Widgets
 
 #LodePNG implementation
