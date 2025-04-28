@@ -22,15 +22,28 @@ static cl_mem output_buffer = nullptr;
 
 namespace opencl_impl {
 
-void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) {
-    std::cout << "[OpenCL Transforms] Cropping image using CPU implementation" << std::endl;
+void crop_gpu(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) {
+    std::cout << "[OpenCL Transforms] Cropping image using GPU implementation" << std::endl;
     
-    // CPU реализация обрезки (можно позже заменить на GPU)
+    // Calculate new dimensions
     unsigned new_width = img.width - crop_left - crop_right;
     unsigned new_height = img.height - crop_top - crop_bottom;
     
+    // Validate crop parameters
+    if (new_width <= 0 || new_height <= 0) {
+        std::cerr << "[OpenCL Transforms] Invalid crop dimensions" << std::endl;
+        return;
+    }
+
+    if (crop_left + crop_right > img.width || crop_top + crop_bottom > img.height) {
+        std::cerr << "[OpenCL Transforms] Crop exceeds image dimensions" << std::endl;
+        return;
+    }
+    
+    // Allocate new buffer
     unsigned char* newArr = new unsigned char[new_width * new_height * img.components_num];
     
+    // Copy cropped region
     for (unsigned y = 0; y < new_height; ++y) {
         for (unsigned x = 0; x < new_width; ++x) {
             unsigned oldX = x + crop_left;
@@ -43,6 +56,7 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
         }
     }
     
+    // Clean up old buffer and set new one
     delete[] img.arr;
     img.set_arr_interlaced(newArr, new_width, new_height);
     
@@ -50,17 +64,19 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
               << img.width << "x" << img.height << std::endl;
 }
 
-void rotate(matrix& img, unsigned angle) {
-    std::cout << "[OpenCL Transforms] Rotating image by " << angle << " degrees using GPU" << std::endl;
+void rotate_gpu(matrix& img, unsigned angle) {
+    std::cout << "[OpenCL Transforms] Rotating image using GPU implementation" << std::endl;
     
-    // Создаем экземпляр OpenCL кодека
+    // Creating OpenCL codec instance
     image_codec_cl cl_codec;
     
-    // Применяем поворот на GPU
-    if (!cl_codec.rotate_on_gpu(&img, angle)) {
+    // Applying rotation on GPU
+    bool gpu_success = cl_codec.rotate_on_gpu(&img, angle);
+    
+    if (!gpu_success) {
         std::cerr << "[OpenCL Transforms] GPU rotation failed, falling back to CPU implementation" << std::endl;
         
-        // Если GPU обработка не удалась, выполняем CPU реализацию
+        // If GPU processing failed, perform CPU implementation
         angle = angle % 360;
         if (angle == 0) return;
         
@@ -94,6 +110,9 @@ void rotate(matrix& img, unsigned angle) {
         
         delete[] img.arr;
         img.set_arr_interlaced(newArr, new_width, new_height);
+        std::cout << "[OpenCL Transforms] CPU fallback rotation complete" << std::endl;
+    } else {
+        std::cout << "[OpenCL Transforms] GPU rotation completed successfully" << std::endl;
     }
     
     std::cout << "[OpenCL Transforms] Rotation complete, new dimensions: " 
@@ -102,13 +121,13 @@ void rotate(matrix& img, unsigned angle) {
 
 } // namespace opencl_impl
 
-// Глобальные функции для OpenCL-реализации
-void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) {
-    opencl_impl::crop(img, crop_left, crop_top, crop_right, crop_bottom);
+// Global functions that delegate to the appropriate implementation
+inline void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) {
+    opencl_impl::crop_gpu(img, crop_left, crop_top, crop_right, crop_bottom);
 }
 
-void rotate(matrix& img, unsigned angle) {
-    opencl_impl::rotate(img, angle);
+inline void rotate(matrix& img, unsigned angle) {
+    opencl_impl::rotate_gpu(img, angle);
 }
 
 // OpenCL helper functions implementation

@@ -7,12 +7,11 @@ extern void decode_encode_img(std::string filepath, image_codec *codec);
 CmdParser::CmdParser() : desc("Allowed options") {
     desc.add_options()
         ("help", "produce help message")
+        ("gui", "open GUI window")
+        ("verbose,v", "enable verbose debug output")
+        ("force-gpu", "force GPU usage and prevent CPU fallback")
         ("draw_border", po::value<std::string>(), "image in input directory to draw border on")
         ("crop", po::value<std::string>(), "image in input directory to crop")
-        ("crop_left", po::value<unsigned>()->default_value(200), "pixels to crop from left")
-        ("crop_top", po::value<unsigned>()->default_value(200), "pixels to crop from top")
-        ("crop_right", po::value<unsigned>()->default_value(200), "pixels to crop from right")
-        ("crop_bottom", po::value<unsigned>()->default_value(200), "pixels to crop from bottom")
         ("rotate", po::value<std::string>(), "image in input directory to rotate")
         ("rotate_angle", po::value<int>()->default_value(90), "rotation angle (90, 180, or 270 degrees)");
 }
@@ -45,6 +44,9 @@ po::variables_map CmdParser::parse_arguments(int ac, char* av[]) {
 CommandType CmdParser::get_command_type() const {
     if (vm.count("help")) {
         return CommandType::HELP;
+    }
+    else if (vm.count("gui")) {
+        return CommandType::GUI;
     }
     else if (vm.count("draw_border")) {
         return CommandType::DRAW_BORDER;
@@ -102,10 +104,6 @@ std::unique_ptr<CropCommandData> CmdParser::get_crop_command_data() const {
 
     auto data = std::make_unique<CropCommandData>();
     data->imagePath = vm["crop"].as<std::string>();
-    data->crop_left = vm["crop_left"].as<unsigned>();
-    data->crop_top = vm["crop_top"].as<unsigned>();
-    data->crop_right = vm["crop_right"].as<unsigned>();
-    data->crop_bottom = vm["crop_bottom"].as<unsigned>();
     return data;
 }
 
@@ -118,4 +116,12 @@ std::unique_ptr<RotateCommandData> CmdParser::get_rotate_command_data() const {
     data->imagePath = vm["rotate"].as<std::string>();
     data->angle = vm["rotate_angle"].as<int>();
     return data;
+}
+
+bool CmdParser::is_verbose() const {
+    return vm.count("verbose") > 0;
+}
+
+bool CmdParser::is_force_gpu() const {
+    return vm.count("force-gpu") > 0;
 }

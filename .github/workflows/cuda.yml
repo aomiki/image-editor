@@ -1,4 +1,4 @@
-name: Build with CUDA and Boost
+name: Build with CUDA
 on:
   push:
     branches: ["main"]
@@ -9,6 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install General
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libboost-program-options-dev qt6-base-dev
+
       - uses: Jimver/cuda-toolkit@v0.2.22
         id: cuda-toolkit
         with:
@@ -16,10 +21,6 @@ jobs:
           method: "network"
           sub-packages: '["nvcc", "cudart", "cudart-dev"]'
           non-cuda-sub-packages: '["cuda", "libnvjpeg"]'
-      - name: Install Boost
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libboost-program-options-dev
       - name: checkout submodules
         run: git submodule update --init --recursive
       - run: echo "Installed cuda version is ${{steps.cuda-toolkit.outputs.cuda}}"

@@ -5,14 +5,14 @@ inline LodePNGColorType ColorSchemeToLodeColorType(ImageColorScheme colorscheme)
 {
     switch (colorscheme)
     {
-        case ImageColorScheme::IMAGE_GRAY:
+        case ImageColorScheme::IMAGE_GRAY :
             return LodePNGColorType::LCT_GREY;
-        case ImageColorScheme::IMAGE_RGB:
+        case ImageColorScheme::IMAGE_RGB :
             return LodePNGColorType::LCT_RGB;
         case ImageColorScheme::IMAGE_PALETTE:
             return LodePNGColorType::LCT_PALETTE;
         default:
-            return LodePNGColorType::LCT_RGB;
+            return LodePNGColorType::LCT_MAX_OCTET_VALUE;
     }
 }
 
@@ -21,18 +21,24 @@ inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType colo
     switch (color_type)
     {
         case LodePNGColorType::LCT_RGBA:
+            return ImageColorScheme::IMAGE_RGB;
         case LodePNGColorType::LCT_RGB:
             return ImageColorScheme::IMAGE_RGB;
         case LodePNGColorType::LCT_PALETTE:
             return ImageColorScheme::IMAGE_PALETTE;
         case LodePNGColorType::LCT_GREY:
             return ImageColorScheme::IMAGE_GRAY;
-        case LodePNGColorType::LCT_GREY_ALPHA:
-            return ImageColorScheme::IMAGE_RGB;
-        case LodePNGColorType::LCT_MAX_OCTET_VALUE:
-        default:
-            return ImageColorScheme::IMAGE_RGB;
+        
+        
     }
+}
+
+image_codec::image_codec()
+{}
+
+ImgFormat image_codec::native_format()
+{
+    return PNG;
 }
 
 ImageInfo image_codec::read_info(std::vector<unsigned char>* img_buffer)
@@ -79,7 +85,7 @@ void image_codec::decode(std::vector<unsigned char>* img_source, matrix* img_mat
 
     delete result_w;
     delete result_h;
-}
+};
 
 void image_codec::load_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath)
 {
@@ -90,3 +96,6 @@ void image_codec::save_image_file(std::vector<unsigned char>* png_buffer, std::s
 {
     lodepng::save_file(*png_buffer, image_filepath+".png");
 }
+
+image_codec::~image_codec()
+{}

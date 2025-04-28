@@ -83,7 +83,11 @@
     "typeinfo": "cpp",
     "valarray": "cpp",
     "variant": "cpp",
-    "ranges": "cpp"
+    "ranges": "cpp",
+    "hash_map": "cpp",
+    "cfenv": "cpp",
+    "csetjmp": "cpp",
+    "source_location": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

@@ -8,6 +8,26 @@
 #include "impls_hw_accel/opencl/image_codec_cl.h"
 #include <filesystem>
 #include "lodepng.h"
+#include "image_edit.h" // For global flags
+
+inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType color_type)
+{
+    switch (color_type)
+    {
+        case LodePNGColorType::LCT_RGBA:
+        case LodePNGColorType::LCT_RGB:
+            return ImageColorScheme::IMAGE_RGB;
+        case LodePNGColorType::LCT_PALETTE:
+            return ImageColorScheme::IMAGE_PALETTE;
+        case LodePNGColorType::LCT_GREY:
+            return ImageColorScheme::IMAGE_GRAY;
+        case LodePNGColorType::LCT_GREY_ALPHA:
+            return ImageColorScheme::IMAGE_RGB;
+        case LodePNGColorType::LCT_MAX_OCTET_VALUE:
+        default:
+            return ImageColorScheme::IMAGE_RGB;
+    }
+}
 
 namespace {
     // OpenCL resources
@@ -174,7 +194,10 @@ bool image_codec_cl::initializeOpenCL() {
     if (initialized) return true;
 
     try {
-        std::cout << "[OpenCL] Initializing OpenCL" << std::endl;
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Initializing OpenCL" << std::endl;
+        }
+        
         // Get available platforms
         std::vector<cl::Platform> platforms;
         cl::Platform::get(&platforms);
@@ -182,28 +205,76 @@ bool image_codec_cl::initializeOpenCL() {
             std::cerr << "[OpenCL] No OpenCL platforms found" << std::endl;
             return false;
         }
-        std::cout << "[OpenCL] Found " << platforms.size() << " platforms" << std::endl;
+        
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Found " << platforms.size() << " platforms:" << std::endl;
+            for (size_t i = 0; i < platforms.size(); i++) {
+                std::string platformName = platforms[i].getInfo<CL_PLATFORM_NAME>();
+                std::string platformVendor = platforms[i].getInfo<CL_PLATFORM_VENDOR>();
+                std::string platformVersion = platforms[i].getInfo<CL_PLATFORM_VERSION>();
+                std::cout << "  Platform " << i << ": " << platformName << " (" << platformVendor << "), " << platformVersion << std::endl;
+            }
+        }
 
         // Select first platform
         cl::Platform platform = platforms[0];
 
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Selected platform: " << platform.getInfo<CL_PLATFORM_NAME>() << std::endl;
+        }
+
         // Get devices
         std::vector<cl::Device> devices;
         platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
+        
         if (devices.empty()) {
-            std::cerr << "[OpenCL] No GPU devices found, trying CPU" << std::endl;
+            std::cerr << "[OpenCL] No GPU devices found" << std::endl;
+            
+            if (g_force_gpu_enabled) {
+                std::cerr << "[OpenCL] Force GPU is enabled, so not falling back to CPU" << std::endl;
+                return false;
+            }
+            
+            std::cerr << "[OpenCL] Trying CPU devices instead" << std::endl;
             platform.getDevices(CL_DEVICE_TYPE_CPU, &devices);
             if (devices.empty()) {
                 std::cerr << "[OpenCL] No CPU devices found either" << std::endl;
                 return false;
             }
         }
-        std::cout << "[OpenCL] Found " << devices.size() << " devices" << std::endl;
+        
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Found " << devices.size() << " devices:" << std::endl;
+            for (size_t i = 0; i < devices.size(); i++) {
+                std::string deviceName = devices[i].getInfo<CL_DEVICE_NAME>();
+                std::string deviceVendor = devices[i].getInfo<CL_DEVICE_VENDOR>();
+                std::string deviceVersion = devices[i].getInfo<CL_DEVICE_VERSION>();
+                cl_device_type deviceType = devices[i].getInfo<CL_DEVICE_TYPE>();
+                
+                std::string typeStr;
+                if (deviceType == CL_DEVICE_TYPE_CPU) typeStr = "CPU";
+                else if (deviceType == CL_DEVICE_TYPE_GPU) typeStr = "GPU";
+                else if (deviceType == CL_DEVICE_TYPE_ACCELERATOR) typeStr = "Accelerator";
+                else typeStr = "Other";
+                
+                std::cout << "  Device " << i << ": " << deviceName << " (" << deviceVendor << "), " 
+                          << deviceVersion << ", Type: " << typeStr << std::endl;
+            }
+        }
 
         // Select first device
         device = devices[0];
+        cl_device_type deviceType = device.getInfo<CL_DEVICE_TYPE>();
+        bool isGPU = (deviceType == CL_DEVICE_TYPE_GPU);
+        
+        if (!isGPU && g_force_gpu_enabled) {
+            std::cerr << "[OpenCL] Selected device is not a GPU, but force GPU is enabled. Aborting." << std::endl;
+            return false;
+        }
+        
         std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
-        std::cout << "[OpenCL] Using device: " << deviceName << std::endl;
+        std::cout << "[OpenCL] Using device: " << deviceName 
+                  << " (Type: " << (isGPU ? "GPU" : "CPU") << ")" << std::endl;
 
         // Create context and command queue
         context = cl::Context(device);
@@ -219,9 +290,12 @@ bool image_codec_cl::initializeOpenCL() {
                      << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
             return false;
         }
-        std::cout << "[OpenCL] Program built successfully" << std::endl;
+        
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Program built successfully" << std::endl;
+        }
 
-        // Сохраняем копии в анонимном namespace для общего доступа
+        // Store copies in anonymous namespace for shared access
         global_context = context;
         global_device = device;
         global_program = program;
@@ -249,50 +323,16 @@ void image_codec_cl::load_image_file(std::vector<unsigned char>* png_buffer, std
 }
 
 ImageInfo image_codec_cl::read_info(std::vector<unsigned char>* img_buffer) {
-    std::cout << "[OpenCL] Reading image info from buffer size: " << img_buffer->size() << std::endl;
-    
-    unsigned w = 0, h = 0;
     LodePNGState state;
     lodepng_state_init(&state);
-    
-    unsigned error = lodepng_inspect(&w, &h, &state, img_buffer->data(), img_buffer->size());
-    
-    if (error) {
-        std::cerr << "[OpenCL] Error reading PNG info: " << lodepng_error_text(error) << std::endl;
-    }
-    
-    ImageInfo info;
-    info.width = w;
-    info.height = h;
-    
-    // Сохраняем размеры для последующего использования
-    this->width = w;
-    this->height = h;
-    
-    // Определяем цветовую схему
-    switch (state.info_png.color.colortype) {
-        case LCT_GREY:
-            info.colorScheme = IMAGE_GRAY;
-            break;
-        case LCT_RGB:
-        case LCT_RGBA:
-            info.colorScheme = IMAGE_RGB;
-            break;
-        case LCT_PALETTE:
-            info.colorScheme = IMAGE_PALETTE;
-            break;
-        default:
-            info.colorScheme = IMAGE_RGB;
-            break;
-    }
-    
-    info.bit_depth = state.info_png.color.bitdepth;
-    
-    std::cout << "[OpenCL] Image info: " << info.width << "x" << info.height 
-              << ", color scheme: " << static_cast<int>(info.colorScheme) 
-              << ", bit depth: " << info.bit_depth << std::endl;
-    
-    return info;
+
+    ImageInfo img_info;
+    lodepng_inspect(&img_info.width, &img_info.height, &state, img_buffer->data(), img_buffer->size());
+
+    img_info.colorScheme = LodePNGColorTypeToImageColorScheme(state.info_png.color.colortype);
+    img_info.bit_depth = state.info_png.color.bitdepth;
+
+    return img_info;
 }
 
 void image_codec_cl::decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth) {
@@ -392,59 +432,97 @@ void image_codec_cl::save_image_file(std::vector<unsigned char>* png_buffer, std
     std::cout << "[OpenCL] File saved successfully as: " << image_filepath << std::endl;
 }
 
-// Функция для поворота изображения на GPU
+// Function for rotating an image on GPU
 bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
-    std::cout << "[OpenCL] Rotating image on GPU by " << angle << " degrees" << std::endl;
+    if (g_verbose_enabled) {
+        std::cout << "[OpenCL] Rotating image on GPU by " << angle << " degrees" << std::endl;
+    }
     
     if (!img_matrix || !img_matrix->get_arr_interlaced()) {
         std::cerr << "[OpenCL] Invalid matrix for rotation" << std::endl;
         return false;
     }
     
-    // Нормализуем угол до 0-359
+    // Normalize angle to 0-359
     angle = angle % 360;
     if (angle == 0) {
-        std::cout << "[OpenCL] No rotation needed (angle=0)" << std::endl;
-        return true; // Поворот на 0 градусов - ничего не делаем
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] No rotation needed (angle=0)" << std::endl;
+        }
+        return true; // No rotation needed
     }
     
-    // Инициализируем OpenCL, если еще не инициализирован
+    // Initialize OpenCL if not initialized
     if (!initializeOpenCL()) {
         std::cerr << "[OpenCL] Failed to initialize OpenCL" << std::endl;
         return false;
     }
     
-    // Выводим состояние OpenCL
-    std::cout << "[OpenCL] OpenCL initialized: " << initialized << std::endl;
+    // Check if we're on a GPU
+    cl_device_type deviceType = device.getInfo<CL_DEVICE_TYPE>();
+    bool isGPU = (deviceType == CL_DEVICE_TYPE_GPU);
+    
+    if (!isGPU) {
+        std::cout << "[OpenCL] WARNING: Using CPU for OpenCL processing, not GPU!" << std::endl;
+        
+        if (g_force_gpu_enabled) {
+            std::cerr << "[OpenCL] Force GPU is enabled, aborting CPU execution" << std::endl;
+            return false;
+        }
+    } else {
+        std::cout << "[OpenCL] Using GPU for OpenCL processing" << std::endl;
+    }
+    
+    if (g_verbose_enabled) {
+        std::cout << "[OpenCL] OpenCL initialized: " << initialized << std::endl;
+    }
     
     try {
-        // Получаем текущие размеры и данные матрицы
+        // Get current matrix dimensions and data
         unsigned w = img_matrix->width;
         unsigned h = img_matrix->height;
         unsigned components = img_matrix->components_num;
         
-        // Создаем копию данных матрицы для обработки
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Input image dimensions: " << w << "x" << h 
+                    << " with " << components << " components" << std::endl;
+        }
+        
+        // Create a copy of matrix data for processing
         size_t input_size = w * h * components;
         std::vector<unsigned char> input_data(img_matrix->get_arr_interlaced(), 
                                               img_matrix->get_arr_interlaced() + input_size);
         
-        // Определяем новые размеры
+        // Determine new dimensions
         unsigned new_width = w;
         unsigned new_height = h;
         
-        // Для поворотов на 90 и 270 градусов меняем местами ширину и высоту
+        // For 90 and 270 degree rotations, swap width and height
         if (angle == 90 || angle == 270) {
             new_width = h;
             new_height = w;
         }
         
-        // Размер выходных данных
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Output dimensions will be: " << new_width << "x" << new_height << std::endl;
+        }
+        
+        // Size of output data
         size_t output_size = new_width * new_height * components;
         
-        // Создаем буферы OpenCL
+        // Create OpenCL buffers
         cl_int err = CL_SUCCESS;
         
-        // Буфер входных данных
+        // Print device information
+        if (g_verbose_enabled) {
+            std::string deviceName = device.getInfo<CL_DEVICE_NAME>();
+            std::string deviceVendor = device.getInfo<CL_DEVICE_VENDOR>();
+            std::string deviceVersion = device.getInfo<CL_DEVICE_VERSION>();
+            std::cout << "[OpenCL] Using device: " << deviceName << " from " << deviceVendor 
+                      << " (version: " << deviceVersion << ")" << std::endl;
+        }
+        
+        // Input buffer
         cl::Buffer device_input(
             context, 
             CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
@@ -458,7 +536,7 @@ bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
             return false;
         }
         
-        // Буфер выходных данных
+        // Output buffer
         cl::Buffer device_output(context, CL_MEM_WRITE_ONLY, output_size, nullptr, &err);
         
         if (err != CL_SUCCESS) {
@@ -466,7 +544,7 @@ bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
             return false;
         }
         
-        // Выбираем ядро в зависимости от угла поворота
+        // Select kernel based on rotation angle
         std::string kernel_name;
         if (angle == 90) {
             kernel_name = "rotate_90_cw";
@@ -475,19 +553,23 @@ bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
         } else if (angle == 270) {
             kernel_name = "rotate_270_cw";
         } else {
-            // Если угол не поддерживается, просто копируем данные
+            // If angle is not supported, just copy data
             kernel_name = "process_image";
         }
         
-        // Создаем и настраиваем ядро
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Using kernel: " << kernel_name << std::endl;
+        }
+        
+        // Create and configure kernel
         cl::Kernel kernel(program, kernel_name.c_str(), &err);
         
         if (err != CL_SUCCESS) {
-            std::cerr << "[OpenCL] Error creating kernel: " << err << std::endl;
+            std::cerr << "[OpenCL] Error creating kernel '" << kernel_name << "': " << err << std::endl;
             return false;
         }
         
-        // Устанавливаем аргументы ядра
+        // Set kernel arguments
         err = kernel.setArg(0, device_input);
         err |= kernel.setArg(1, device_output);
         err |= kernel.setArg(2, w);
@@ -499,37 +581,60 @@ bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
             return false;
         }
         
-        // Выполняем ядро
-        err = queue.enqueueNDRangeKernel(kernel, cl::NullRange, cl::NDRange(w, h), cl::NullRange);
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Executing kernel..." << std::endl;
+        }
+        
+        // Execute the kernel
+        err = queue.enqueueNDRangeKernel(
+            kernel, 
+            cl::NullRange, 
+            cl::NDRange(w, h), 
+            cl::NullRange
+        );
         
         if (err != CL_SUCCESS) {
             std::cerr << "[OpenCL] Error enqueueing kernel: " << err << std::endl;
             return false;
         }
         
-        // Читаем результат
+        // Make sure all operations on the queue are finished
+        queue.finish();
+        
+        if (g_verbose_enabled) {
+            std::cout << "[OpenCL] Kernel execution completed" << std::endl;
+        }
+        
+        // Read result
         std::vector<unsigned char> rotated_data(output_size);
-        err = queue.enqueueReadBuffer(device_output, CL_TRUE, 0, output_size, rotated_data.data());
+        err = queue.enqueueReadBuffer(
+            device_output, 
+            CL_TRUE, 
+            0, 
+            output_size, 
+            rotated_data.data()
+        );
         
         if (err != CL_SUCCESS) {
             std::cerr << "[OpenCL] Error reading output buffer: " << err << std::endl;
             return false;
         }
         
-        // Изменяем размер матрицы, если нужно
+        // Resize matrix if needed
         if (img_matrix->width != new_width || img_matrix->height != new_height) {
-            std::cout << "[OpenCL] Resizing matrix for rotated image: " << new_width << "x" << new_height << std::endl;
+            if (g_verbose_enabled) {
+                std::cout << "[OpenCL] Resizing matrix for rotated image: " << new_width << "x" << new_height << std::endl;
+            }
             img_matrix->resize(new_width, new_height);
         }
         
-        // Копируем повернутые данные обратно в матрицу
+        // Copy rotated data back into the matrix
         std::memcpy(img_matrix->get_arr_interlaced(), rotated_data.data(), rotated_data.size());
         
-        std::cout << "[OpenCL] Image rotated successfully" << std::endl;
+        std::cout << "[OpenCL] Image rotated successfully using " << (isGPU ? "GPU" : "CPU") << std::endl;
         return true;
-    }
-    catch (const std::exception& e) {
+    } catch (const std::exception& e) {
         std::cerr << "[OpenCL] Error during rotation: " << e.what() << std::endl;
         return false;
     }
-}
+} 

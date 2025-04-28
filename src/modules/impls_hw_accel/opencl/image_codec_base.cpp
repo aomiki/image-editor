@@ -1,6 +1,9 @@
 #include "image_codec.h"
 
-// Default implementation of virtual methods
+// Implementation moved to image_codec_lodepng.cpp to avoid multiple definitions
+// These are just default placeholders anyway
+
+/*
 ImageInfo image_codec::read_info(std::vector<unsigned char>* img_buffer) {
     ImageInfo info;
     info.width = 0;
@@ -24,4 +27,5 @@ void image_codec::load_image_file(std::vector<unsigned char>* png_buffer, std::s
 
 void image_codec::save_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) {
     // Default implementation does nothing
-} 
+}
+*/ 

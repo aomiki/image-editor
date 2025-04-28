@@ -19,12 +19,16 @@ public:
     image_codec_cl();
     ~image_codec_cl();
 
-    ImageInfo read_info(std::vector<unsigned char>* img_buffer) override;
-    void encode(std::vector<unsigned char>* img_buffer, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth) override;
-    void decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth) override;
-    void load_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) override;
-    void save_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) override;
+    ImgFormat native_format() const {
+        return ImgFormat::PNG;
+    }
 
-    // Функция для поворота изображения на GPU
+    ImageInfo read_info(std::vector<unsigned char>* img_buffer);
+    void encode(std::vector<unsigned char>* img_buffer, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth);
+    void decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth);
+    void load_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath);
+    void save_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath);
+
+    // Function for rotating an image on the GPU
     bool rotate_on_gpu(matrix* img_matrix, unsigned angle);
 }; 
