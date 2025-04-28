@@ -8,8 +8,10 @@ CmdParser::CmdParser() : desc("Allowed options") {
     desc.add_options()
         ("help", "produce help message")
         ("gui", "open GUI window")
+
         ("verbose,v", "enable verbose debug output")
         ("force-gpu", "force GPU usage and prevent CPU fallback")
+
         ("draw_border", po::value<std::string>(), "image in input directory to draw border on")
         ("crop", po::value<std::string>(), "image in input directory to crop")
         ("rotate", po::value<std::string>(), "image in input directory to rotate")

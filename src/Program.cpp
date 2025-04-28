@@ -42,6 +42,8 @@ int main(int argc, char* argv[]) {
 
     image_codec codec;
 
+    image_codec codec;
+
     switch (cmdType) {
         case CommandType::GUI: {
             QApplication a(argc, argv);
