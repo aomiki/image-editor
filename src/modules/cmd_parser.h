@@ -58,6 +58,11 @@ public:
     std::unique_ptr<CropCommandData> get_crop_command_data() const;
     std::unique_ptr<RotateCommandData> get_rotate_command_data() const;
 
+    // Check if verbose mode is enabled
+    bool is_verbose() const;
+    
+    // Check if GPU should be forced
+    bool is_force_gpu() const;
 
     void decode_encode_img(std::string filepath, image_codec *codec);
 

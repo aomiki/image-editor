@@ -5,7 +5,7 @@
 #include <cstring>
 
 // OpenCL kernel source code
-const char* kernelSource = R"(
+const char* opsKernelSource = R"(
     __kernel void rgb_to_gray(__global const uchar* input,
                              __global uchar* output,
                              const int width,
@@ -60,7 +60,7 @@ OpenCLImageOps::OpenCLImageOps() : initialized(false) {
     command_queue = clCreateCommandQueue(context, device_id, 0, &ret);
     checkError(ret, "Failed to create command queue");
 
-    program = createProgram(kernelSource);
+    program = createProgram(opsKernelSource);
     
     // Create kernels
     rgb_to_gray_kernel = clCreateKernel(program, "rgb_to_gray", &ret);
