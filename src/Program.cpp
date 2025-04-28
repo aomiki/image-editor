@@ -8,6 +8,11 @@
 #include <memory>
 #include <filesystem>
 
+// Подключаем реализацию в зависимости от бэкенда
+#ifdef OPENCL_IMPL
+#include "impls_hw_accel/opencl/image_codec_cl.h"
+#endif
+
 namespace fs = std::filesystem;
 
 
@@ -16,9 +21,30 @@ const fs::path input_folder("input");
 
 void decode_encode_img(std::string filepath, image_codec* codec);
 
+// Функция для создания директории, если она не существует
+void ensure_directory_exists(const fs::path& dir) {
+    if (!fs::exists(dir)) {
+        std::cout << "Creating directory: " << dir << std::endl;
+        fs::create_directories(dir);
+    }
+}
+
 int main(int argc, char* argv[]) {
     std::cout << "Shellow from SSAU!" << std::endl;
+    
+    // Создаем директории при запуске программы
+    ensure_directory_exists(result_folder);
+    ensure_directory_exists(input_folder);
+    
+    // Создаем реализацию кодека в зависимости от бэкенда
+    #ifdef OPENCL_IMPL
+    std::cout << "Using OpenCL implementation" << std::endl;
+    image_codec_cl codec;
+    #else
+    std::cout << "Using LodePNG implementation" << std::endl;
     image_codec codec;
+    #endif
+
     CmdParser parser;
     parser.parse_arguments(argc, argv);
 
@@ -44,8 +70,12 @@ int main(int argc, char* argv[]) {
         case CommandType::CROP: {
             auto cropData = parser.get_crop_command_data();
             if (cropData) {
-                std::cout << "Cropping image: " << cropData->imagePath << "\n";
-                transform_image_crop(cropData->imagePath, &codec);
+                std::cout << "Cropping image: " << cropData->imagePath << " with parameters: " 
+                          << cropData->crop_left << ", " << cropData->crop_top << ", "
+                          << cropData->crop_right << ", " << cropData->crop_bottom << "\n";
+                transform_image_crop(cropData->imagePath, &codec, 
+                                    cropData->crop_left, cropData->crop_top, 
+                                    cropData->crop_right, cropData->crop_bottom);
                 std::cout << cropData->imagePath << " cropped successfully\n";
             }
             return 0;

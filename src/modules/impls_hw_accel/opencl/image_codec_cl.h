@@ -1,5 +1,4 @@
-#ifndef image_codec_cl_h
-#define image_codec_cl_h
+#pragma once
 
 #include <CL/opencl.hpp>
 #include "image_codec.h"
@@ -25,6 +24,7 @@ public:
     void decode(std::vector<unsigned char>* img_source, matrix* img_matrix, ImageColorScheme colorScheme, unsigned bit_depth) override;
     void load_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) override;
     void save_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath) override;
-};
 
-#endif 
+    // Функция для поворота изображения на GPU
+    bool rotate_on_gpu(matrix* img_matrix, unsigned angle);
+}; 

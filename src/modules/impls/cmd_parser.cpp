@@ -9,6 +9,10 @@ CmdParser::CmdParser() : desc("Allowed options") {
         ("help", "produce help message")
         ("draw_border", po::value<std::string>(), "image in input directory to draw border on")
         ("crop", po::value<std::string>(), "image in input directory to crop")
+        ("crop_left", po::value<unsigned>()->default_value(200), "pixels to crop from left")
+        ("crop_top", po::value<unsigned>()->default_value(200), "pixels to crop from top")
+        ("crop_right", po::value<unsigned>()->default_value(200), "pixels to crop from right")
+        ("crop_bottom", po::value<unsigned>()->default_value(200), "pixels to crop from bottom")
         ("rotate", po::value<std::string>(), "image in input directory to rotate")
         ("rotate_angle", po::value<int>()->default_value(90), "rotation angle (90, 180, or 270 degrees)");
 }
@@ -98,6 +102,10 @@ std::unique_ptr<CropCommandData> CmdParser::get_crop_command_data() const {
 
     auto data = std::make_unique<CropCommandData>();
     data->imagePath = vm["crop"].as<std::string>();
+    data->crop_left = vm["crop_left"].as<unsigned>();
+    data->crop_top = vm["crop_top"].as<unsigned>();
+    data->crop_right = vm["crop_right"].as<unsigned>();
+    data->crop_bottom = vm["crop_bottom"].as<unsigned>();
     return data;
 }
 
