@@ -1,12 +1,44 @@
 #include "scene.h"
 #include <cstring>
+#include <iostream>
 #include "image_transforms.h"
+#include "image_edit.h" // For global flags
+#ifdef OPENCL_IMPL
+#include "impls_hw_accel/opencl/image_codec_cl.h"
+#endif
 
 scene::scene()
 {
+    std::cout << "Initializing scene..." << std::endl;
+    
+#ifdef OPENCL_IMPL
+    std::cout << "OpenCL support is enabled" << std::endl;
+    if (g_force_gpu_enabled) {
+        std::cout << "GPU mode is enabled, trying to create OpenCL codec..." << std::endl;
+        try {
+            codec = new image_codec_cl();
+            std::cout << "Successfully created OpenCL implementation for image codec" << std::endl;
+        } catch (const std::exception& e) {
+            std::cout << "Error creating OpenCL codec: " << e.what() << std::endl;
+            std::cout << "Falling back to standard implementation" << std::endl;
+            codec = new image_codec();
+        } catch (...) {
+            std::cout << "Unknown error creating OpenCL codec, falling back to standard implementation" << std::endl;
+            codec = new image_codec();
+        }
+    } else {
+        std::cout << "Using standard implementation for image codec (GPU not forced)" << std::endl;
+        codec = new image_codec();
+    }
+#else
+    std::cout << "Using standard implementation for image codec (OpenCL not enabled)" << std::endl;
     codec = new image_codec();
+#endif
+    
+    std::cout << "Initializing other scene resources..." << std::endl;
     img_matrix = nullptr;
     img_buffer = nullptr;
+    std::cout << "Scene initialization complete" << std::endl;
 }
 
 scene::~scene()
@@ -20,16 +52,29 @@ scene::~scene()
 
 long unsigned scene::get_img_binary_size()
 {
+    if (img_buffer == nullptr) {
+        std::cerr << "Warning: img_buffer is null in get_img_binary_size" << std::endl;
+        return 0;
+    }
     return img_buffer->size();
 }
 
 void scene::get_img_binary(unsigned char* img_buffer)
 {
+    if (this->img_buffer == nullptr) {
+        std::cerr << "Warning: img_buffer is null in get_img_binary" << std::endl;
+        return;
+    }
     std::memcpy(img_buffer, this->img_buffer->data(), this->img_buffer->size());
 }
 
 ImageInfo scene::get_img_info()
 {
+    if (img_buffer == nullptr) {
+        std::cerr << "Warning: img_buffer is null in get_img_info" << std::endl;
+        ImageInfo empty_info = {ImageColorScheme::IMAGE_RGB, 8, 0, 0};
+        return empty_info;
+    }
     return codec->read_info(img_buffer);
 }
 

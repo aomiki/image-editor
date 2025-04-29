@@ -184,6 +184,12 @@ namespace {
 
 image_codec_cl::image_codec_cl() : width(0), height(0), initialized(false) {
     std::cout << "[OpenCL] Initializing image_codec_cl" << std::endl;
+    
+    // Try to initialize OpenCL right away to catch errors early
+    if (!initializeOpenCL()) {
+        std::cerr << "[OpenCL] Failed to initialize OpenCL during construction" << std::endl;
+        throw std::runtime_error("Failed to initialize OpenCL");
+    }
 }
 
 image_codec_cl::~image_codec_cl() {

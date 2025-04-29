@@ -75,6 +75,11 @@ void MainWindow::updateImage(bool imgChanged)
     if (imgChanged)
     {
         unsigned img_size = curr_scene->get_img_binary_size();
+        if (img_size == 0) {
+            log("No image data available yet");
+            return;
+        }
+        
         unsigned char* img_binary = new unsigned char[img_size];
     
         curr_scene->get_img_binary(img_binary);
@@ -91,6 +96,7 @@ void MainWindow::updateImage(bool imgChanged)
                 break;
             default:
                 log("unsupported image format, can't display");
+                delete [] img_binary;
                 return;
         }
     
