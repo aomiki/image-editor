@@ -97,7 +97,7 @@ void scene::encode()
     codec->encode(img_buffer, img_matrix, colorScheme, 8);
 }
 
-void scene::rotate(unsigned angle)
+void scene::rotate(float angle)
 {
     ::rotate(*img_matrix, angle);
 }
@@ -105,4 +105,14 @@ void scene::rotate(unsigned angle)
 void scene::crop(unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom)
 {
     ::crop(*img_matrix, crop_left, crop_top, crop_right, crop_bottom);
+}
+
+void scene::reflect(bool horizontal, bool vertical)
+{
+    ::reflect(*img_matrix, horizontal, vertical);
+}
+
+void scene::shear(float shx, float shy)
+{
+    ::shear(*img_matrix, shx, shy);
 }

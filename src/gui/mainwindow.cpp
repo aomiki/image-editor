@@ -29,7 +29,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->spinBox_crop_right, SIGNAL(valueChanged(int)), this, SLOT(editParamsChanged()));
     connect(ui->spinBox_crop_bottom, SIGNAL(valueChanged(int)), this, SLOT(editParamsChanged()));
     connect(ui->spinBox_crop_top, SIGNAL(valueChanged(int)), this, SLOT(editParamsChanged()));
-    connect(ui->comboBox_rotate, SIGNAL(currentIndexChanged(int)), this, SLOT(editParamsChanged()));
+    connect(ui->doubleSpinBox_rotate, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
+    connect(ui->checkBox_reflectHorizontal, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
+    connect(ui->checkBox_reflectVertical, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
+    connect(ui->doubleSpinBox_shearX, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
+    connect(ui->doubleSpinBox_shearY, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
 }
 
 void MainWindow::editParamsChanged()
@@ -42,7 +46,8 @@ void MainWindow::editParamsChanged()
 
 void MainWindow::buttonEditClicked()
 {
-    bool has_changed = false;
+    log("starting edit...");
+    int op_i = 0;
 
     int crop_l = ui->spinBox_crop_left->value();
     int crop_r = ui->spinBox_crop_right->value();
@@ -51,19 +56,40 @@ void MainWindow::buttonEditClicked()
 
     if (crop_l != 0 || crop_r != 0 || crop_t != 0 || crop_b != 0)
     {
+        op_i++;
+        log(QString::number(op_i) + ". crop");
         curr_scene->crop(crop_l, crop_t, crop_r, crop_b);
-        has_changed = true;
     }
 
-    int rot_angle = ui->comboBox_rotate->currentText().toInt();
+    float rot_angle = ui->doubleSpinBox_rotate->value();
     if (rot_angle != 0)
     {
+        op_i++;
+        log(QString::number(op_i) + ". rotate");
         curr_scene->rotate(rot_angle);
-        has_changed = true;
     }
 
-    if (has_changed)
+    bool reflectHorizontal = ui->checkBox_reflectHorizontal->isChecked();
+    bool reflectVertical = ui->checkBox_reflectVertical->isChecked();
+    if (reflectHorizontal || reflectVertical)
     {
+        op_i++;
+        log(QString::number(op_i) + ". reflect");
+        curr_scene->reflect(reflectHorizontal, reflectVertical);
+    }
+
+    float shx = ui->doubleSpinBox_shearX->value();
+    float shy = ui->doubleSpinBox_shearY->value();
+    if (shx != 0 || shy != 0)
+    {
+        op_i++;
+        log(QString::number(op_i) + ". shear");
+        curr_scene->shear(shx, shy);
+    }
+
+    if (op_i > 0)
+    {
+        log("finishing edit, encoding...");
         curr_scene->encode();   
         updateImage();
     }

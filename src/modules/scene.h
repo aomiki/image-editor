@@ -29,6 +29,8 @@ class scene
         void decode();
         void encode();
 
-        void rotate(unsigned angle);
+        void rotate(float angle);
         void crop(unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom);
+        void reflect(bool horizontal, bool vertical);
+        void shear(float shx, float shy);
 };

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1839</width>
-    <height>1269</height>
+    <width>1847</width>
+    <height>1277</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -195,28 +195,79 @@ tabWidget::tab:selected {
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_rotate">
-             <item>
-              <property name="text">
-               <string>0</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>90</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>180</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>270</string>
-              </property>
-             </item>
+            <widget class="QDoubleSpinBox" name="doubleSpinBox_rotate">
+             <property name="suffix">
+              <string>°</string>
+             </property>
+             <property name="minimum">
+              <double>-999999.989999999990687</double>
+             </property>
+             <property name="maximum">
+              <double>999999.989999999990687</double>
+             </property>
             </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_4">
+             <property name="text">
+              <string>Reflect</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_reflect">
+             <item>
+              <widget class="QCheckBox" name="checkBox_reflectHorizontal">
+               <property name="text">
+                <string>Horizontal</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="checkBox_reflectVertical">
+               <property name="text">
+                <string>Vertical</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_3">
+             <property name="text">
+              <string>Shear</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QHBoxLayout" name="horizontalLayout_shear">
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_shearX">
+               <property name="prefix">
+                <string>X </string>
+               </property>
+               <property name="minimum">
+                <double>-999999.989999999990687</double>
+               </property>
+               <property name="maximum">
+                <double>999999.989999999990687</double>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="doubleSpinBox_shearY">
+               <property name="prefix">
+                <string>Y </string>
+               </property>
+               <property name="minimum">
+                <double>-999999.989999999990687</double>
+               </property>
+               <property name="maximum">
+                <double>999999.989999999990687</double>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item>
             <spacer name="verticalSpacer">
@@ -272,7 +323,7 @@ background-color: rgb(151, 174, 255);</string>
             <x>0</x>
             <y>0</y>
             <width>338</width>
-            <height>519</height>
+            <height>523</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -318,7 +369,7 @@ background-color: rgb(151, 174, 255);</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1839</width>
+     <width>1847</width>
      <height>27</height>
     </rect>
    </property>

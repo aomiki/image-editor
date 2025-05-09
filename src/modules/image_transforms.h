@@ -1,4 +1,5 @@
 #include "image_tools.h"
+
 /**
  * @brief Обрезает изображение по заданным границам
  * @param img Матрица изображения
@@ -8,6 +9,7 @@
  * @param crop_bottom Количество пикселей для обрезки снизу
  */
 void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom);
+
 /**
  * @brief Отражает изображение по горизонтали и/или вертикали
  * @param img Матрица изображения
@@ -16,6 +18,7 @@ void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_righ
  * @attention Если оба параметра `false`, изображение не изменится
  */
 void reflect(matrix& img, bool horizontal, bool vertical);
+
 /**
  * @brief Применяет аффинный сдвиг к изображению
  * @param img Матрица изображения
@@ -24,7 +27,9 @@ void reflect(matrix& img, bool horizontal, bool vertical);
  * @note как работает: https://www.geeksforgeeks.org/shearing-in-2d-graphics/
  */
 void shear(matrix& img, float shx, float shy);
+
 void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result);
+
 /**
  * @brief Поворачивает изображение на заданный (любой) угол
  * @param img Матрица изображения
