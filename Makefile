@@ -5,7 +5,7 @@ CXX = g++
 
 OPTIMIZATION_FLAGS_RELEASE= -march=native -Ofast
 OPTIMIZATION_FLAGS_DEBUG= -O0 -g
-OPTIMIZATION_FLAGS=$(OPTIMIZATION_FLAGS_RELEASE)
+OPTIMIZATION_FLAGS=$(OPTIMIZATION_FLAGS_DEBUG)
 
 NV_OPTIMIZATION_FLAGS_RELEASE= -use_fast_math -v
 NV_OPTIMIZATION_FLAGS_DEBUG= --debug --device-debug --cudart shared
@@ -59,13 +59,9 @@ OPENCL_INCLUDE := $(INC)/CL
 OPENCL_LIBS := -L/usr/lib/x86_64-linux-gnu -lOpenCL
 
 #General arguments
-<<<<<<< HEAD
-LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/ -I$(OPENCL_INCLUDE)
+LDFLAGS := -I$(MODULES_DIR)/ -I$(INC)/lodepng/ -I$(INC)/ -I$(OPENCL_INCLUDE) \-ILRs/ -I/usr/include/openblas -fopenmp -lopenblas
 CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g
-=======
-LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I LRs/ -I/usr/include/openblas -fopenmp -lopenblas
-CXXFLAGS := $(LDFLAGS) $(MODULES) $(SRC)/Program.o -g
->>>>>>> 033a26b1 (added shear)
+
 
 #Compile with LodePNG implementation (link object files)
 graphics-lode.out: HW_ACCEL = LODE_IMPL
