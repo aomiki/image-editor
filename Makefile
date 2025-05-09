@@ -59,8 +59,8 @@ OPENCL_INCLUDE := $(INC)/CL
 OPENCL_LIBS := -L/usr/lib/x86_64-linux-gnu -lOpenCL
 
 #General arguments
-LDFLAGS := -I$(MODULES_DIR)/ -I$(INC)/lodepng/ -I$(INC)/ -I$(OPENCL_INCLUDE) \-ILRs/ -I/usr/include/openblas -fopenmp -lopenblas
-CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g
+LDFLAGS := -I$(MODULES_DIR)/ -I$(INC)/lodepng/ -I$(INC)/ -I$(OPENCL_INCLUDE)
+CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g \-ILRs/ -I/usr/include/openblas -fopenmp -lopenblas
 
 
 #Compile with LodePNG implementation (link object files)

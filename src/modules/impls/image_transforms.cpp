@@ -3,41 +3,6 @@
 #include <cblas.h>  
 #include <cmath>
 #include <algorithm>
-using namespace std;
-
-void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) 
-{
-    unsigned new_width = img.width - crop_left - crop_right;
-    unsigned new_height = img.height - crop_top - crop_bottom;
-
-    
-    if (new_width <= 0 || new_height <= 0) 
-    {
-        return;
-    }
-
-    if (crop_left + crop_right > img.width || crop_top + crop_bottom > img.height) 
-    {
-        return;
-    }
-
-    unsigned char* newArr = new unsigned char[new_width * new_height * img.components_num];
-    unsigned char* src = img.arr + (crop_top * img.width + crop_left) * img.components_num;
-    unsigned char* dst = newArr;
-
-    for (unsigned i = 0; i < new_height; ++i) 
-    {
-        memcpy(dst, src, new_width * img.components_num);
-        src += img.width * img.components_num;  
-        dst += new_width * img.components_num;  
-    }
-
-    
-    delete[] img.arr;
-
-    img.set_arr_interlaced(newArr, new_width, new_height);
-
-}
 
 void reflect(matrix& img, bool horizontal, bool vertical) 
 {
@@ -59,6 +24,7 @@ void reflect(matrix& img, bool horizontal, bool vertical)
     delete[] img.arr;
     img.arr = newArr;
 }
+
 void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result) {
     const int max_x = static_cast<int>(img.width) - 1;
     const int max_y = static_cast<int>(img.height) - 1;
@@ -86,6 +52,7 @@ void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result) 
         result[c] = static_cast<unsigned char>(v00*w00 + v10*w10 + v01*w01 + v11*w11);
     }
 }
+
 void shear(matrix& img, float shx, float shy) {
     unsigned new_width = static_cast<unsigned>(img.width + 2*std::abs(shy)*img.height);
     unsigned new_height = static_cast<unsigned>(img.height + 2*std::abs(shx)*img.width);
