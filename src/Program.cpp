@@ -13,9 +13,9 @@
 
 namespace fs = std::filesystem;
 
-
 const fs::path result_folder("output");
-const fs::path input_folder("input");
+const fs::path input_folder ("input");
+
 
 void decode_encode_img(std::string filepath, image_codec* codec);
 
@@ -55,12 +55,13 @@ int main(int argc, char* argv[]) {
             auto cropData = parser.get_crop_command_data();
             if (cropData) {
                 std::cout << "Cropping image: " << cropData->imagePath << "\n";
-                transform_image_crop(cropData->imagePath, &codec);
+                transform_image_crop(cropData->imagePath, &codec, cropData->crop_left, cropData->crop_top, 
+                                                                  cropData->crop_right, cropData->crop_bottom);
                 std::cout << cropData->imagePath << " cropped successfully\n";
             }
             return 0;
         }
-
+    
         case CommandType::ROTATE: {
             auto rotateData = parser.get_rotate_command_data();
             if (rotateData) {
