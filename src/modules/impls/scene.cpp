@@ -3,6 +3,11 @@
 #include <iostream>
 #include "image_transforms.h"
 #include "image_edit.h" // For global flags
+
+// Global flags
+extern bool g_force_gpu_enabled;
+extern bool g_verbose_enabled;
+
 #ifdef OPENCL_IMPL
 #include "impls_hw_accel/opencl/image_codec_cl.h"
 #endif
@@ -10,7 +15,7 @@
 scene::scene()
 {
     std::cout << "Initializing scene..." << std::endl;
-    
+
 #ifdef OPENCL_IMPL
     std::cout << "OpenCL support is enabled" << std::endl;
     if (g_force_gpu_enabled) {
@@ -34,7 +39,7 @@ scene::scene()
     std::cout << "Using standard implementation for image codec (OpenCL not enabled)" << std::endl;
     codec = new image_codec();
 #endif
-    
+
     std::cout << "Initializing other scene resources..." << std::endl;
     img_matrix = nullptr;
     img_buffer = nullptr;
@@ -142,7 +147,7 @@ void scene::encode()
     codec->encode(img_buffer, img_matrix, colorScheme, 8);
 }
 
-void scene::rotate(unsigned angle)
+void scene::rotate(float angle)
 {
     ::rotate(*img_matrix, angle);
 }
@@ -150,4 +155,14 @@ void scene::rotate(unsigned angle)
 void scene::crop(unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom)
 {
     ::crop(*img_matrix, crop_left, crop_top, crop_right, crop_bottom);
+}
+
+void scene::reflect(bool horizontal, bool vertical)
+{
+    ::reflect(*img_matrix, horizontal, vertical);
+}
+
+void scene::shear(float shx, float shy)
+{
+    ::shear(*img_matrix, shx, shy);
 }

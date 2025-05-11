@@ -43,6 +43,7 @@ LD_LIBS_GUI=-lQt6Core -lQt6Gui -lQt6Widgets
 #LodePNG implementation
 LODE_SRC := $(wildcard $(INC)/lodepng/lodepng.cpp $(MODULES_DIR)/impls_cpu/*.cpp)
 LODE :=  $(patsubst %.cpp,%.o,$(LODE_SRC))
+CXXFLAGS_LODE = -DLODE_IMPL
 
 #CUDA implementation
 CUDA_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/cuda/*.cu)
@@ -59,11 +60,13 @@ OPENCL_INCLUDE := $(INC)/CL
 OPENCL_LIBS := -L/usr/lib/x86_64-linux-gnu -lOpenCL
 
 #General arguments
-LDFLAGS := -I $(MODULES_DIR)/ -I $(INC)/lodepng/ -I $(INC)/ -I$(OPENCL_INCLUDE)
-CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g
+LDFLAGS := -I$(MODULES_DIR)/ -I$(INC)/lodepng/ -I$(INC)/ -I$(OPENCL_INCLUDE)
+CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g \-ILRs/ -fopenmp -lcblas
+
 
 #Compile with LodePNG implementation (link object files)
 graphics-lode.out: HW_ACCEL = LODE_IMPL
+graphics-lode.out: CXXFLAGS += $(CXXFLAGS_LODE)
 graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(GUI) $(SRC)/Program.o $(CMD_PARSER_OBJ)
 	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-lode.out -lboost_program_options
 
@@ -76,7 +79,7 @@ graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(GUI) $(SR
 #Compile with OpenCL implementation
 graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
 graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(GUI) $(SRC)/Program.o
-	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS)
+	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS) -lcblas
 
 $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -arch=native -x cu -rdc=true $(NV_OPTIMIZATION_FLAGS) -o $@ -c $^
@@ -89,13 +92,13 @@ $(GUI_DIR)/moc_mainwindow.cpp: $(GUI_DIR)/mainwindow.h $(GUI_DIR)/ui_mainwindow.
 	$(QT_DIR)/moc -I modules/ -I include/lodepng/ $< -o $@
 
 $(GUI_DIR)/ui_mainwindow.h: $(GUI_DIR)/mainwindow.ui
-	$(QT_DIR)/uic $(GUI_DIR)/mainwindow.ui -o $(GUI_DIR)/ui_mainwindow.h 
+	$(QT_DIR)/uic $(GUI_DIR)/mainwindow.ui -o $(GUI_DIR)/ui_mainwindow.h
 
 $(GUI_DIR)/mainwindow.o: $(GUI_DIR)/ui_mainwindow.h
 
 #Target that invokes if *.o file with *.cpp source is required by other targets
 %.o: %.cpp
-	$(CXX) $(LDFLAGS) $(LDFLAGS_CUDA) $(LDFLAGS_GUI) $(LDLIBS_CUDA) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o $@ -c $<
+	$(CXX) $(LDFLAGS) $(LDFLAGS_CUDA) $(LDFLAGS_GUI) $(LDLIBS_CUDA) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o $@ -c $< -lcblas
 
 #Clean build files
 clean:

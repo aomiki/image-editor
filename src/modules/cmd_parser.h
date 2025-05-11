@@ -32,6 +32,10 @@ public:
 class CropCommandData : public CommandData {
 public:
     std::string imagePath;
+    unsigned int crop_left;
+    unsigned int crop_top;
+    unsigned int crop_right;
+    unsigned int crop_bottom;
 };
 
 class RotateCommandData : public CommandData {

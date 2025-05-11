@@ -17,8 +17,14 @@ namespace fs = std::filesystem;
 bool g_verbose_enabled = false;
 bool g_force_gpu_enabled = false;
 
+// Make flags accessible to other modules
+extern bool g_verbose_enabled;
+extern bool g_force_gpu_enabled;
+
+
 const fs::path result_folder("output");
-const fs::path input_folder("input");
+const fs::path input_folder ("input");
+
 
 void decode_encode_img(std::string filepath, image_codec* codec);
 
@@ -27,18 +33,20 @@ int main(int argc, char* argv[]) {
     CmdParser parser;
     parser.parse_arguments(argc, argv);
     CommandType cmdType = parser.get_command_type();
-    
+
     // Set the global flags
     g_verbose_enabled = parser.is_verbose();
     g_force_gpu_enabled = parser.is_force_gpu();
-    
+
     if (g_verbose_enabled) {
         std::cout << "Verbose mode enabled" << std::endl;
     }
-    
+
     if (g_force_gpu_enabled) {
         std::cout << "Forcing GPU mode (will not fall back to CPU)" << std::endl;
     }
+
+
 
     image_codec codec;
 
@@ -70,7 +78,8 @@ int main(int argc, char* argv[]) {
             auto cropData = parser.get_crop_command_data();
             if (cropData) {
                 std::cout << "Cropping image: " << cropData->imagePath << "\n";
-                transform_image_crop(cropData->imagePath, &codec);
+                transform_image_crop(cropData->imagePath, &codec, cropData->crop_left, cropData->crop_top,
+                                                                  cropData->crop_right, cropData->crop_bottom);
                 std::cout << cropData->imagePath << " cropped successfully\n";
             }
             return 0;
