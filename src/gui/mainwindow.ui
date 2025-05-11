@@ -288,7 +288,7 @@ tabWidget::tab:selected {
           <attribute name="title">
            <string>Filters</string>
           </attribute>
-          <widget class="QCheckBox" name="checkBox_greyscale">
+          <widget class="QCheckBox" name="checkBox_grayscale">
            <property name="geometry">
             <rect>
              <x>10</x>
@@ -298,7 +298,36 @@ tabWidget::tab:selected {
             </rect>
            </property>
            <property name="text">
-            <string>Greyscale</string>
+            <string>Grayscale</string>
+           </property>
+          </widget>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_blur">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>60</y>
+             <width>301</width>
+             <height>26</height>
+            </rect>
+           </property>
+           <property name="maximum">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_5">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>40</y>
+             <width>54</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Blur</string>
            </property>
           </widget>
          </widget>

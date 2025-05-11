@@ -32,9 +32,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->doubleSpinBox_rotate, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
     connect(ui->checkBox_reflectHorizontal, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
     connect(ui->checkBox_reflectVertical, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
-    connect(ui->checkBox_greyscale, SIGNAL(clicked(bool)), this, SLOT(GreyscaleCheckboxClicked(bool)));
+    connect(ui->checkBox_grayscale, SIGNAL(clicked(bool)), this, SLOT(GrayscaleCheckboxClicked(bool)));
     connect(ui->doubleSpinBox_shearX, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
     connect(ui->doubleSpinBox_shearY, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged())); 
+    connect(ui->doubleSpinBox_blur, QOverload<double>::of(&QDoubleSpinBox::valueChanged),this, &MainWindow::BlurSigmaChanged);
 }
 
 void MainWindow::editParamsChanged()
@@ -87,7 +88,12 @@ void MainWindow::buttonEditClicked()
         log(QString::number(op_i) + ". shear");
         curr_scene->shear(shx, shy);
     }
-
+    float blurSigma = ui->doubleSpinBox_blur->value();
+    if (blurSigma > 0) { 
+        op_i++;
+        log("Gaussian Blur σ=" + QString::number(blurSigma));
+        curr_scene->gaussian_blur(blurSigma);
+    }
     if (op_i > 0)
     {
         log("finishing edit, encoding...");
@@ -204,11 +210,20 @@ MainWindow::~MainWindow()
     delete ui;
     delete curr_scene;
 }
-void MainWindow::GreyscaleCheckboxClicked(bool checked) 
+void MainWindow::GrayscaleCheckboxClicked(bool checked) 
 {
     if (checked) {
         log("applying greyscale filter");
-        curr_scene->greyscale();
+        curr_scene->grayscale();
+        curr_scene->encode();
+        updateImage(true);
+    }
+}
+void MainWindow::BlurSigmaChanged(double sigma)
+{
+    if (ui->checkBox_interactiveRender->isChecked() && sigma > 0) {
+        log("Applying Gaussian Blur (σ=" + QString::number(sigma) + ")");
+        curr_scene->gaussian_blur(sigma);
         curr_scene->encode();
         updateImage(true);
     }

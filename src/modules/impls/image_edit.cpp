@@ -158,7 +158,7 @@ void transform_image_grayscale(std::string filepath, image_codec* codec)
     }
 
     codec->decode(&img_buffer, mat, info.colorScheme, info.bit_depth);
-    greyscale(*mat);
+    grayscale(*mat);
 
     img_buffer.clear();
     codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
