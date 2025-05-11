@@ -28,7 +28,9 @@ jobs:
             clinfo \
             wget \
             gnupg \
-            lsb-release
+            lsb-release \
+            libblas-dev \
+            libopenblas-dev
 
       - name: Install Intel OpenCL Runtime
         run: |
