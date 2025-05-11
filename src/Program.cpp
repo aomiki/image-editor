@@ -77,7 +77,6 @@ int main(int argc, char* argv[]) {
             std::cout << "No valid command specified\n";
             return 1;
     }
-    transform_image_grayscale("sub-warped-gaia.png", &codec);
 }
 
 /// @brief Draws border around an image

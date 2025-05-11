@@ -24,8 +24,8 @@ public slots:
     void buttonSaveClicked();
     void editParamsChanged();
     void buttonEditClicked();
-    void GrayscaleCheckboxClicked(bool checked);
-    void BlurSigmaChanged(double sigma);
+    void grayscaleCheckboxClicked(bool checked);
+    void blurSigmaChanged(double sigma);
 
 private:
     scene* curr_scene;

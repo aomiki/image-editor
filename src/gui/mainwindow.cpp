@@ -32,10 +32,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->doubleSpinBox_rotate, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
     connect(ui->checkBox_reflectHorizontal, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
     connect(ui->checkBox_reflectVertical, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
-    connect(ui->checkBox_grayscale, SIGNAL(clicked(bool)), this, SLOT(GrayscaleCheckboxClicked(bool)));
+    connect(ui->checkBox_grayscale, SIGNAL(clicked(bool)), this, SLOT(grayscaleCheckboxClicked(bool)));
     connect(ui->doubleSpinBox_shearX, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
     connect(ui->doubleSpinBox_shearY, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged())); 
-    connect(ui->doubleSpinBox_blur, QOverload<double>::of(&QDoubleSpinBox::valueChanged),this, &MainWindow::BlurSigmaChanged);
+    connect(ui->doubleSpinBox_blur, QOverload<double>::of(&QDoubleSpinBox::valueChanged),this, &MainWindow::blurSigmaChanged);
 }
 
 void MainWindow::editParamsChanged()
@@ -210,7 +210,7 @@ MainWindow::~MainWindow()
     delete ui;
     delete curr_scene;
 }
-void MainWindow::GrayscaleCheckboxClicked(bool checked) 
+void MainWindow::grayscaleCheckboxClicked(bool checked) 
 {
     if (checked) {
         log("applying greyscale filter");
@@ -219,7 +219,7 @@ void MainWindow::GrayscaleCheckboxClicked(bool checked)
         updateImage(true);
     }
 }
-void MainWindow::BlurSigmaChanged(double sigma)
+void MainWindow::blurSigmaChanged(double sigma)
 {
     if (ui->checkBox_interactiveRender->isChecked() && sigma > 0) {
         log("Applying Gaussian Blur (σ=" + QString::number(sigma) + ")");
