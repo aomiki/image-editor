@@ -10,6 +10,8 @@
 #include "lodepng.h"
 #include "image_edit.h" // For global flags
 
+extern bool g_verbose_enabled;
+extern bool g_force_gpu_enabled;
 inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType color_type)
 {
     switch (color_type)
