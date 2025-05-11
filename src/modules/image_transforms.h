@@ -1,4 +1,5 @@
 #include "image_tools.h"
+#include "_shared_definitions.h"
 
 /**
  * @brief Обрезает изображение по заданным границам
@@ -28,11 +29,11 @@ void reflect(matrix& img, bool horizontal, bool vertical);
  */
 void shear(matrix& img, float shx, float shy);
 
-void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result);
-
 /**
  * @brief Поворачивает изображение на заданный (любой) угол
  * @param img Матрица изображения
  * @param angle Угол поворота в градусах
  */
 void rotate(matrix& img, float angle);
+
+__shared_func__ void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result);

@@ -2,15 +2,7 @@
 
 #ifndef image_tools_h
 #define image_tools_h
-
-//the generic functions here should be executable on GPU
-// if file is built by nvcc, then the attributes are defined, 
-// if by anything else - then not
-# ifdef __CUDACC__
-#  define __shared_func__ __host__ __device__
-# else
-#  define __shared_func__
-# endif
+#include "_shared_definitions.h"
 
 enum ImageColorScheme{
     IMAGE_GRAY,
