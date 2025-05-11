@@ -32,8 +32,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->doubleSpinBox_rotate, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
     connect(ui->checkBox_reflectHorizontal, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
     connect(ui->checkBox_reflectVertical, SIGNAL(clicked(bool)), this, SLOT(editParamsChanged()));
+    connect(ui->checkBox_greyscale, SIGNAL(clicked(bool)), this, SLOT(GreyscaleCheckboxClicked(bool)));
     connect(ui->doubleSpinBox_shearX, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
-    connect(ui->doubleSpinBox_shearY, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged()));
+    connect(ui->doubleSpinBox_shearY, SIGNAL(valueChanged(double)), this, SLOT(editParamsChanged())); 
 }
 
 void MainWindow::editParamsChanged()
@@ -202,4 +203,13 @@ MainWindow::~MainWindow()
 {
     delete ui;
     delete curr_scene;
+}
+void MainWindow::GreyscaleCheckboxClicked(bool checked) 
+{
+    if (checked) {
+        log("applying greyscale filter");
+        curr_scene->greyscale();
+        curr_scene->encode();
+        updateImage(true);
+    }
 }
