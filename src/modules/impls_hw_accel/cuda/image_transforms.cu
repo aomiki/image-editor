@@ -94,6 +94,58 @@ __global__ void kernel_shear_memcpy(matrix* img_src, matrix* img_dest, float2 sh
     }
 }
 
+__global__ void kernel_rotate_initBatchPtrs(
+    float** batch_ptrs_d_R_inv, float** batch_ptrs_new_coords, float** batch_ptrs_src_coords,
+    float * d_R_inv, float* batch_new_coords, float* batch_src_coords,
+    float new_half_width, float new_half_height,
+    unsigned width, unsigned height)
+{
+    const unsigned int x = threadIdx.x + blockDim.x * blockIdx.x;
+    const unsigned int y = threadIdx.y + blockDim.y * blockIdx.y;
+
+    if (x >= width || y >= height)
+    {
+        return;
+    }
+
+    const unsigned i = y*width + x;
+
+    batch_ptrs_d_R_inv[i] = d_R_inv;
+    batch_ptrs_new_coords[i] = batch_new_coords + (i*2);
+    batch_ptrs_src_coords[i] = batch_src_coords + (i*2);
+
+    batch_ptrs_new_coords[i][0] = x - new_half_width;
+    batch_ptrs_new_coords[i][1] = y - new_half_height;
+}
+
+__global__ void kernel_rotate_setPixels(matrix* img_src, matrix* img_dest, float** batch_ptrs_src_coords, float half_width, float half_height)
+{
+    const unsigned int x = threadIdx.x + blockDim.x * blockIdx.x;
+    const unsigned int y = threadIdx.y + blockDim.y * blockIdx.y;
+
+    if (x >= img_dest->width || y >= img_dest->height)
+    {
+        return;
+    }
+
+    const unsigned i = y*img_dest->width + x;
+
+    const float2 src_coords {
+        batch_ptrs_src_coords[i][0] + half_width,
+        batch_ptrs_src_coords[i][1] + half_height
+    };
+
+    if (src_coords.x >= 0 && src_coords.x <= img_src->width-1 && 
+        src_coords.y >= 0 && src_coords.y <= img_src->height-1) {
+        unsigned char* pixel = img_dest->get(x, y);
+
+        bilinear_interpolate(*img_src, src_coords.x, src_coords.y, pixel);
+    } else {
+        unsigned char* pixel = img_dest->get(x, y);
+        memset(pixel, 255, img_src->components_num);
+    }
+}
+
 void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom) 
 {
     unsigned new_width = img.width - crop_left - crop_right;
@@ -334,4 +386,191 @@ void shear(matrix& img, float shx, float shy) {
     cuda_log(cudaFree(d_img));
     cuda_log(cudaFree(d_src_arr));
     cuda_log(cudaFree(d_dest_img));
+}
+
+void rotate(matrix& img, float angle) {
+    cublasHandle_t handle;
+    cuda_log(cublasCreate(&handle));
+    cuda_log(cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_HOST));
+
+    float radians = angle * M_PI / 180.0f;
+    float cos_theta = cos(radians);
+    float sin_theta = sin(radians);
+
+    const float R[] = {
+        //column 1
+        cos_theta,
+        sin_theta,
+
+        //column 2
+        -sin_theta,
+        cos_theta
+    };
+    float* d_R;
+    const size_t R_bytes_size = 2*2 * sizeof(float);
+
+    cuda_log(cudaMalloc(&d_R, R_bytes_size));
+    cuda_log(cudaMemcpy(d_R, R, R_bytes_size, cudaMemcpyHostToDevice));
+
+    const float half_height = img.height * 0.5f;
+    const float half_width = img.width * 0.5f;
+
+    //2 columns, 4 rows
+    const float corners[] = {
+        //column 1
+        -half_width, 
+         half_width, 
+        -half_width, 
+         half_width, 
+
+         //column 2
+        -half_height,
+        -half_height,
+        half_height,
+        half_height
+    };
+    float* d_corners;
+    const size_t corners_bytes_size = 4 * 2 * sizeof(float);
+
+    cuda_log(cudaMalloc(&d_corners, corners_bytes_size));
+    cuda_log(cudaMemcpy(d_corners, corners, corners_bytes_size, cudaMemcpyHostToDevice));
+
+    const float alpha = 1.0f;
+    const float beta = 0.0f;
+
+    float* d_rotated_corners;
+    cuda_log(cudaMalloc(&d_rotated_corners, corners_bytes_size));
+
+    cuda_log(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, 4, 2, 2, &alpha, d_corners, 4, d_R, 2, &beta, d_rotated_corners, 4));
+
+    float rotated_corners[8];
+    cuda_log(cudaMemcpy(rotated_corners, d_rotated_corners, corners_bytes_size, cudaMemcpyDeviceToHost));
+
+    float2 min {
+        rotated_corners[0],
+        rotated_corners[1]
+    };
+
+    float2 max = min;
+
+    for (int i = 1; i < 4; ++i) {
+        min.x = std::min(min.x, rotated_corners[i*2]);
+        max.x = std::max(max.x, rotated_corners[i*2]);
+        min.y = std::min(min.y, rotated_corners[i*2+1]);
+        max.y = std::max(max.y, rotated_corners[i*2+1]);
+    }
+
+    const unsigned new_width = static_cast<unsigned>(round(max.x - min.x));
+    const unsigned new_height = static_cast<unsigned>(round(max.y - min.y));
+
+    matrix* d_img;
+    cuda_log(cudaMalloc(&d_img, sizeof(matrix)));
+    cuda_log(cudaMemcpy(d_img, &img, sizeof(matrix), cudaMemcpyHostToDevice));
+
+    unsigned char* d_dest_arr;
+    cuda_log(cudaMalloc(&d_dest_arr, sizeof(unsigned char) * new_width * new_height * img.components_num));
+    unsigned char* d_src_arr = img.get_arr_interlaced();
+    img.set_arr_interlaced(d_dest_arr, new_width, new_height);
+
+    matrix* d_dest_img;
+    cuda_log(cudaMalloc(&d_dest_img, sizeof(matrix)));
+    cuda_log(cudaMemcpy(d_dest_img, &img, sizeof(matrix), cudaMemcpyHostToDevice));
+
+    const float new_half_width = new_width * 0.5f;
+    const float new_half_height = new_height * 0.5f;
+
+    const float R_inv[4] = {
+        //column 1
+        cos_theta,  
+        -sin_theta, 
+
+        //column 2
+        sin_theta,
+        cos_theta
+    };
+    float* d_R_inv;
+
+    cuda_log(cudaMalloc(&d_R_inv, R_bytes_size));
+    cuda_log(cudaMemcpy(d_R_inv, R_inv, R_bytes_size, cudaMemcpyHostToDevice));
+
+    const unsigned batch_size = new_height* new_width;
+
+    //array of input coords
+    float* batch_new_coords;
+    cuda_log(cudaMalloc(&batch_new_coords, sizeof(float) * 2 * batch_size));
+
+    //array of resulting coords
+    float* batch_src_coords;
+    cuda_log(cudaMalloc(&batch_src_coords, sizeof(float) * 2 * batch_size));
+
+    //array of the same pointer d_R_inv
+    float** batch_ptrs_d_R_inv;
+    cuda_log(cudaMalloc(&batch_ptrs_d_R_inv, sizeof(float*) * batch_size));
+
+    //array of input coords
+    float** batch_ptrs_new_coords;
+    cuda_log(cudaMalloc(&batch_ptrs_new_coords, sizeof(float*) * batch_size));
+
+    //array of resulting coords
+    float** batch_ptrs_src_coords;
+    cuda_log(cudaMalloc(&batch_ptrs_src_coords, sizeof(float*) * batch_size));
+
+    const unsigned batch_iteration_num = new_height * new_width;
+    unsigned poly_total_blocksize = 32;
+    if (batch_iteration_num >= 4480)
+    {
+        poly_total_blocksize = 128;
+    }
+
+    if (batch_iteration_num >= 8960)
+    {
+        poly_total_blocksize = 256;
+    }
+
+    if (batch_iteration_num >= 17920)
+    {
+        poly_total_blocksize = 512;
+    }
+
+    if (batch_iteration_num >= 35840)
+    {
+        poly_total_blocksize = 1024;
+    }
+
+    unsigned blocksize_1d = (unsigned)sqrtf(poly_total_blocksize);
+
+    unsigned blocknum_x = (unsigned)((new_width/blocksize_1d) +1);
+    unsigned blocknum_y = (unsigned)((new_height/blocksize_1d) +1);
+
+    dim3 blocksize(blocksize_1d, blocksize_1d);
+    dim3 blocknum(blocknum_x, blocknum_y);
+
+    //initialize all arrays for batched gemv
+    kernel_rotate_initBatchPtrs<<<blocknum, blocksize>>>(batch_ptrs_d_R_inv, batch_ptrs_new_coords, batch_ptrs_src_coords, d_R_inv, batch_new_coords, batch_src_coords, new_half_width, new_half_height, new_width, new_height);
+    cuda_log(cudaGetLastError());
+    cuda_log(cudaDeviceSynchronize());
+
+    cuda_log(cublasSgemvBatched(handle, CUBLAS_OP_N, 2, 2, &alpha, batch_ptrs_d_R_inv, 2, batch_ptrs_new_coords, 1, &beta, batch_ptrs_src_coords, 1, batch_size));
+
+    kernel_rotate_setPixels<<<blocknum, blocksize>>>(d_img, d_dest_img, batch_ptrs_src_coords, half_width, half_height);
+    cuda_log(cudaDeviceSynchronize());
+    cuda_log(cudaGetLastError());
+
+    cuda_log(cudaFree(d_src_arr));
+    cuda_log(cudaFree(d_img));
+    cuda_log(cudaFree(d_dest_img));
+
+    cuda_log(cudaFree(d_R));
+    cuda_log(cudaFree(d_R_inv));
+    cuda_log(cudaFree(d_rotated_corners));
+    cuda_log(cudaFree(d_corners));
+
+    cuda_log(cudaFree(batch_new_coords));
+    cuda_log(cudaFree(batch_src_coords));
+
+    cuda_log(cudaFree(batch_ptrs_d_R_inv));
+    cuda_log(cudaFree(batch_ptrs_new_coords));
+    cuda_log(cudaFree(batch_ptrs_src_coords));
+
+    cublasDestroy(handle);
 }
