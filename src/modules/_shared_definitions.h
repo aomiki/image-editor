@@ -27,6 +27,7 @@
     #define vec3 vertex
     #define screen_coords matrix_coord
     using namespace std;
+    #include <algorithm>
 
     #endif
 #endif

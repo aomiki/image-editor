@@ -74,19 +74,19 @@ __global__ void kernel_reflect_memcpy(matrix* img_src, matrix* img_dest, bool ho
     }
 }
 
-__global__ void kernel_shear_memcpy(matrix* img_src, matrix* img_dest, float2 sh, float2 old_center, float2 new_center)
+__global__ void kernel_shear_memcpy(matrix* img_src, matrix* img_dest, float2 sh, float2 offset)
 {
     unsigned int x = threadIdx.x + blockDim.x * blockIdx.x;
     unsigned int y = threadIdx.y + blockDim.y * blockIdx.y;
 
-    if (x >= img_src->width || y >= img_src->height)
+    if (x >= img_dest->width || y >= img_dest->height)
     {
         return;
     }
 
     float2 src_coords {
-        old_center.x + (x - new_center.x) - sh.x*(y - new_center.y),
-        old_center.y + (y - new_center.y) - sh.y*(x - new_center.x)
+        (x - offset.x) - sh.y*(y - offset.y),
+        (y - offset.y) - sh.x*(x - offset.x)
     };
 
     if (src_coords.x >= 0 && src_coords.x < img_src->width && src_coords.y >= 0 && src_coords.y < img_src->height) {
@@ -325,36 +325,32 @@ void reflect(matrix& img, bool horizontal, bool vertical)
 }
 
 void shear(matrix& img, float shx, float shy) {
-    unsigned new_width = static_cast<unsigned>(img.width + 2*std::abs(shy)*img.height);
-    unsigned new_height = static_cast<unsigned>(img.height + 2*std::abs(shx)*img.width);
+    const unsigned new_width = static_cast<unsigned>(img.width + std::abs(shy)*img.height);
+    const unsigned new_height = static_cast<unsigned>(img.height + std::abs(shx)*img.width);
 
-    float2 new_center {
-        new_width / 2.0f,
-        new_height / 2.0f
+    const float2 offset {
+        (shy > 0) ? 0 : std::abs(shy)*img.height,
+        (shx > 0) ? 0 : std::abs(shx)*img.width
     };
 
-    float2 old_center {
-        img.width / 2.0f,
-        img.height / 2.0f
-    };
-
+    const unsigned target_size = new_width * new_height * img.components_num;
     unsigned total_blocksize = 32;
-    if (img.size() >= 4480)
+    if (target_size >= 4480)
     {
         total_blocksize = 128;
     }
 
-    if (img.size() >= 8960)
+    if (target_size >= 8960)
     {
         total_blocksize = 256;
     }
 
-    if (img.size() >= 17920)
+    if (target_size >= 17920)
     {
         total_blocksize = 512;
     }
 
-    if (img.size() >= 35840)
+    if (target_size >= 35840)
     {
         total_blocksize = 1024;
     }
@@ -362,8 +358,8 @@ void shear(matrix& img, float shx, float shy) {
     int blocksize_2d = (int)(total_blocksize/img.components_num);
     int blocksize_1d = (int)sqrt(blocksize_2d);
 
-    int blocksnum_x = (int)(img.width / blocksize_1d + 1);
-    int blocksnum_y = (int)(img.height / blocksize_1d + 1);
+    int blocksnum_x = (int)(new_width / blocksize_1d + 1);
+    int blocksnum_y = (int)(new_height / blocksize_1d + 1);
 
     dim3 blockSize(blocksize_1d, blocksize_1d, img.components_num);
     dim3 gridSize(blocksnum_x, blocksnum_y);
@@ -373,15 +369,15 @@ void shear(matrix& img, float shx, float shy) {
     cuda_log(cudaMemcpy(d_img, &img, sizeof(matrix), cudaMemcpyHostToDevice));
 
     unsigned char* d_dest_arr;
-    cuda_log(cudaMalloc(&d_dest_arr, sizeof(unsigned char) * img.size_interlaced()));
+    cuda_log(cudaMalloc(&d_dest_arr, sizeof(unsigned char) * target_size));
     unsigned char* d_src_arr = img.get_arr_interlaced();
-    img.set_arr_interlaced(d_dest_arr, img.width, img.height);
+    img.set_arr_interlaced(d_dest_arr, new_width, new_height);
 
     matrix* d_dest_img;
     cuda_log(cudaMalloc(&d_dest_img, sizeof(matrix)));
     cuda_log(cudaMemcpy(d_dest_img, &img, sizeof(matrix), cudaMemcpyHostToDevice));
 
-    kernel_shear_memcpy<<<gridSize, blockSize>>>(d_img, d_dest_img, float2 { shx, shy }, old_center, new_center);
+    kernel_shear_memcpy<<<gridSize, blockSize>>>(d_img, d_dest_img, float2 { shx, shy }, offset);
 
     cuda_log(cudaFree(d_img));
     cuda_log(cudaFree(d_src_arr));
