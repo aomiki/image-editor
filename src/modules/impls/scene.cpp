@@ -1,7 +1,7 @@
 #include "scene.h"
 #include <cstring>
 #include "image_transforms.h"
-
+#include "image_filters.h"
 scene::scene()
 {
     codec = new image_codec();
@@ -115,4 +115,12 @@ void scene::reflect(bool horizontal, bool vertical)
 void scene::shear(float shx, float shy)
 {
     ::shear(*img_matrix, shx, shy);
+}
+void scene::grayscale() {
+        ::grayscale(*img_matrix);
+}
+void scene::gaussian_blur(float sigma) {
+    if (img_matrix) {
+        ::gaussian_blur(*img_matrix, sigma);
+    }
 }

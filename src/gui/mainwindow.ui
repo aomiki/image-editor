@@ -123,7 +123,7 @@ tabWidget::tab:selected {
 </string>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tab_transform">
           <property name="layoutDirection">
@@ -286,8 +286,50 @@ tabWidget::tab:selected {
          </widget>
          <widget class="QWidget" name="tab_filters">
           <attribute name="title">
-           <string>Tab 2</string>
+           <string>Filters</string>
           </attribute>
+          <widget class="QCheckBox" name="checkBox_grayscale">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>151</width>
+             <height>23</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Grayscale</string>
+           </property>
+          </widget>
+          <widget class="QDoubleSpinBox" name="doubleSpinBox_blur">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>60</y>
+             <width>301</width>
+             <height>26</height>
+            </rect>
+           </property>
+           <property name="maximum">
+            <double>5.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.500000000000000</double>
+           </property>
+          </widget>
+          <widget class="QLabel" name="label_5">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>40</y>
+             <width>54</width>
+             <height>17</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Blur</string>
+           </property>
+          </widget>
          </widget>
         </widget>
        </item>
@@ -322,8 +364,8 @@ background-color: rgb(151, 174, 255);</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>338</width>
-            <height>523</height>
+            <width>330</width>
+            <height>528</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -370,7 +412,7 @@ background-color: rgb(151, 174, 255);</string>
      <x>0</x>
      <y>0</y>
      <width>1847</width>
-     <height>27</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
