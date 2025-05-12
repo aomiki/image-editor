@@ -85,23 +85,23 @@ void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result) 
         result[c] = static_cast<unsigned char>(v00*w00 + v10*w10 + v01*w01 + v11*w11);
     }
 }
-
 void shear(matrix& img, float shx, float shy) {
-    unsigned new_width = static_cast<unsigned>(img.width + 2*std::abs(shy)*img.height);
-    unsigned new_height = static_cast<unsigned>(img.height + 2*std::abs(shx)*img.width);
+    // Рассчитываем новые размеры 
+    unsigned new_width = static_cast<unsigned>(img.width + std::abs(shy)*img.height);
+    unsigned new_height = static_cast<unsigned>(img.height + std::abs(shx)*img.width);
 
     unsigned char* newArr = new unsigned char[new_width * new_height * img.components_num]();
     std::fill(newArr, newArr + new_width*new_height*img.components_num, 255);
 
-    float center_x = new_width / 2.0f;
-    float center_y = new_height / 2.0f;
-    float img_center_x = img.width / 2.0f;
-    float img_center_y = img.height / 2.0f;
+    // Корректируем смещения для разных направлений сдвига
+    float offset_x = (shy > 0) ? 0 : std::abs(shy)*img.height;
+    float offset_y = (shx > 0) ? 0 : std::abs(shx)*img.width;
 
     for (unsigned y = 0; y < new_height; ++y) {
         for (unsigned x = 0; x < new_width; ++x) {
-            float src_x = img_center_x + (x - center_x) - shx*(y - center_y);
-            float src_y = img_center_y + (y - center_y) - shy*(x - center_x);
+            // Правильное обратное преобразование координат
+            float src_x = (x - offset_x) - shy*(y - offset_y);
+            float src_y = (y - offset_y) - shx*(x - offset_x);
 
             if (src_x >= 0 && src_x < img.width && src_y >= 0 && src_y < img.height) {
                 bilinear_interpolate(img, src_x, src_y, &newArr[(y*new_width + x)*img.components_num]);
