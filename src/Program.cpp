@@ -46,6 +46,12 @@ int main(int argc, char* argv[]) {
         std::cout << "Forcing GPU mode (will not fall back to CPU)" << std::endl;
     }
 
+    // If no valid command was specified, show help
+    if (cmdType == CommandType::NONE) {
+        std::cout << "No valid command specified. Use --help for available options.\n";
+        return 1;
+    }
+
 
 
     image_codec codec;
@@ -119,7 +125,7 @@ int main(int argc, char* argv[]) {
 
         case CommandType::NONE:
         default:
-            std::cout << "No valid command specified\n";
+            std::cout << "No valid command specified. Use --help for available options.\n";
             return 1;
     }
 }

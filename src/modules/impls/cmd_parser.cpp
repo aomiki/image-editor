@@ -29,19 +29,26 @@ void CmdParser::decode_encode_img(std::string filepath, image_codec *codec) {
 }
 
 po::variables_map CmdParser::parse_arguments(int ac, char* av[]) {
-    po::store(po::parse_command_line(ac, av, desc), vm);
-    po::notify(vm);
+    try {
+        po::store(po::command_line_parser(ac, av).options(desc).run(), vm);
+        po::notify(vm);
 
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
-        exit(0);
+        if (vm.count("help")) {
+            std::cout << desc << "\n";
+            exit(0);
+        }
+
+        if (vm.count("draw_border")) {
+            image_codec codec;
+            std::string inp_img = vm["draw_border"].as<std::string>();
+            decode_encode_img(inp_img, &codec);
+            std::cout << inp_img << " drawed successfully\n";
+        }
     }
-
-    if (vm.count("draw_border")) {
-        image_codec codec;
-        std::string inp_img = vm["draw_border"].as<std::string>();
-        decode_encode_img(inp_img, &codec);
-        std::cout << inp_img << " drawed successfully\n";
+    catch (const po::error& e) {
+        std::cerr << "Error: " << e.what() << "\n\n";
+        std::cerr << "For help, use --help option\n";
+        exit(1);
     }
 
     return vm;
