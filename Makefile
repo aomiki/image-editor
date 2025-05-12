@@ -41,9 +41,9 @@ LDFLAGS_GUI=-I/$(QT_HEADERS_DIR) -I$(QT_HEADERS_DIR)/QtGui -I$(QT_HEADERS_DIR)/Q
 LD_LIBS_GUI=-lQt6Core -lQt6Gui -lQt6Widgets
 
 #LodePNG implementation
-LODE_SRC := $(wildcard $(INC)/lodepng/lodepng.cpp $(MODULES_DIR)/impls_cpu/*.cpp)
+LODE_SRC := $(wildcard $(INC)/lodepng/lodepng.cpp $(MODULES_DIR)/impls_cpu/image_codec_lodepng.cpp $(MODULES_DIR)/impls_cpu/image_tools.cpp)
 LODE :=  $(patsubst %.cpp,%.o,$(LODE_SRC))
-CXXFLAGS_LODE = -DLODE_IMPL
+CXXFLAGS_LODE = -DLODE_IMPL -DNOCL
 
 #CUDA implementation
 CUDA_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/cuda/*.cu)
@@ -68,7 +68,7 @@ CXXFLAGS := $(LDFLAGS) $(LDFLAGS_GUI) $(MODULES) $(GUI) $(SRC)/Program.o -g \-IL
 graphics-lode.out: HW_ACCEL = LODE_IMPL
 graphics-lode.out: CXXFLAGS += $(CXXFLAGS_LODE)
 graphics-lode.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(GUI) $(SRC)/Program.o $(CMD_PARSER_OBJ)
-	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-lode.out -lboost_program_options
+	$(CXX) $(CXXFLAGS) $(MODULES_SHARED_CPP) $(LODE) $(CMD_PARSER_OBJ) $(LD_LIBS_GUI) -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-lode.out -lboost_program_options -lOpenCL
 
 #Compile with CUDA implementation
 graphics-cuda.out: HW_ACCEL = CUDA_IMPL
@@ -79,7 +79,7 @@ graphics-cuda.out: $(MODULES) $(MODULES_SHARED_CUDA) $(CUDA_MODULES) $(GUI) $(SR
 #Compile with OpenCL implementation
 graphics-opencl.out: HW_ACCEL = OPENCL_IMPL
 graphics-opencl.out: $(MODULES) $(MODULES_SHARED_CPP) $(LODE) $(OPENCL_MODULES) $(GUI) $(SRC)/Program.o
-	$(CXX) $^ -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS) -lcblas
+	$(CXX) $(MODULES) $(MODULES_SHARED_CPP) include/lodepng/lodepng.o src/modules/impls_cpu/image_codec_lodepng.o src/modules/impls_cpu/image_tools.o $(OPENCL_MODULES) $(GUI) $(SRC)/Program.o -D$(HW_ACCEL) -Wall -Wextra -pedantic $(OPTIMIZATION_FLAGS) -o graphics-opencl.out -lboost_program_options $(LD_LIBS_GUI) $(OPENCL_LIBS) -lcblas
 
 $(MODULES_DIR)/impls_shared/%.cu.o: $(MODULES_DIR)/impls_shared/%.cpp
 	nvcc $(LDFLAGS) -arch=native -x cu -rdc=true $(NV_OPTIMIZATION_FLAGS) -o $@ -c $^

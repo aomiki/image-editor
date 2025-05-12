@@ -1,6 +1,6 @@
 #include "image_edit.h"
 #include "image_transforms.h"
-#ifdef OPENCL_IMPL
+#if defined(OPENCL_IMPL) && !defined(NOCL)
 #include "impls_hw_accel/opencl/image_codec_cl.h"
 #endif
 #include <vector>

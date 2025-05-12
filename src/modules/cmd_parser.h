@@ -14,6 +14,8 @@ enum class CommandType {
     DRAW_BORDER,
     CROP,
     ROTATE,
+    REFLECT,
+    SHEAR,
     GUI
 };
 
@@ -44,6 +46,20 @@ public:
     int angle;
 };
 
+class ReflectCommandData : public CommandData {
+public:
+    std::string imagePath;
+    bool horizontal;
+    bool vertical;
+};
+
+class ShearCommandData : public CommandData {
+public:
+    std::string imagePath;
+    float shearX;
+    float shearY;
+};
+
 class CmdParser {
 public:
     CmdParser();
@@ -61,6 +77,8 @@ public:
     std::unique_ptr<DrawBorderCommandData> get_draw_border_command_data() const;
     std::unique_ptr<CropCommandData> get_crop_command_data() const;
     std::unique_ptr<RotateCommandData> get_rotate_command_data() const;
+    std::unique_ptr<ReflectCommandData> get_reflect_command_data() const;
+    std::unique_ptr<ShearCommandData> get_shear_command_data() const;
 
     // Check if verbose mode is enabled
     bool is_verbose() const;

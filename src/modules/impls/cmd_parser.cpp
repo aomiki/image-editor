@@ -13,7 +13,13 @@ CmdParser::CmdParser() : desc("Allowed options") {
         ("draw_border", po::value<std::string>(), "image in input directory to draw border on")
         ("crop", po::value<std::string>(), "image in input directory to crop")
         ("rotate", po::value<std::string>(), "image in input directory to rotate")
-        ("rotate_angle", po::value<int>()->default_value(90), "rotation angle (90, 180, or 270 degrees)");
+        ("rotate_angle", po::value<int>()->default_value(90), "rotation angle")
+        ("reflect", po::value<std::string>(), "image in input directory to reflect")
+        ("horizontal", po::bool_switch(), "reflect horizontally")
+        ("vertical", po::bool_switch(), "reflect vertically")
+        ("shear", po::value<std::string>(), "image in input directory to shear")
+        ("shear_x", po::value<float>()->default_value(0.0f), "horizontal shear factor")
+        ("shear_y", po::value<float>()->default_value(0.0f), "vertical shear factor");
 }
 
 CmdParser::~CmdParser() {}
@@ -57,6 +63,12 @@ CommandType CmdParser::get_command_type() const {
     else if (vm.count("rotate")) {
         return CommandType::ROTATE;
     }
+    else if (vm.count("reflect")) {
+        return CommandType::REFLECT;
+    }
+    else if (vm.count("shear")) {
+        return CommandType::SHEAR;
+    }
 
     return CommandType::NONE;
 }
@@ -73,6 +85,10 @@ std::unique_ptr<CommandData> CmdParser::get_command_data() const {
             return get_crop_command_data();
         case CommandType::ROTATE:
             return get_rotate_command_data();
+        case CommandType::REFLECT:
+            return get_reflect_command_data();
+        case CommandType::SHEAR:
+            return get_shear_command_data();
         case CommandType::NONE:
         default:
             return nullptr;
@@ -124,4 +140,28 @@ bool CmdParser::is_verbose() const {
 
 bool CmdParser::is_force_gpu() const {
     return vm.count("force-gpu") > 0;
+}
+
+std::unique_ptr<ReflectCommandData> CmdParser::get_reflect_command_data() const {
+    if (!vm.count("reflect")) {
+        return nullptr;
+    }
+
+    auto data = std::make_unique<ReflectCommandData>();
+    data->imagePath = vm["reflect"].as<std::string>();
+    data->horizontal = vm["horizontal"].as<bool>();
+    data->vertical = vm["vertical"].as<bool>();
+    return data;
+}
+
+std::unique_ptr<ShearCommandData> CmdParser::get_shear_command_data() const {
+    if (!vm.count("shear")) {
+        return nullptr;
+    }
+
+    auto data = std::make_unique<ShearCommandData>();
+    data->imagePath = vm["shear"].as<std::string>();
+    data->shearX = vm["shear_x"].as<float>();
+    data->shearY = vm["shear_y"].as<float>();
+    return data;
 }

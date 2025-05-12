@@ -4,8 +4,57 @@
 #include <cmath>
 #include <algorithm>
 
+#ifdef OPENCL_IMPL
+namespace opencl_impl {
+    void crop_gpu(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom);
+    void rotate_gpu(matrix& img, float angle);
+    void reflect_gpu(matrix& img, bool horizontal, bool vertical);
+    void shear_gpu(matrix& img, float shx, float shy);
+}
+#endif
+
+void crop(matrix& img, unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom)
+{
+#ifdef OPENCL_IMPL
+    opencl_impl::crop_gpu(img, crop_left, crop_top, crop_right, crop_bottom);
+#else
+    unsigned new_width = img.width - crop_left - crop_right;
+    unsigned new_height = img.height - crop_top - crop_bottom;
+
+
+    if (new_width <= 0 || new_height <= 0)
+    {
+        return;
+    }
+
+    if (crop_left + crop_right > img.width || crop_top + crop_bottom > img.height)
+    {
+        return;
+    }
+
+    unsigned char* newArr = new unsigned char[new_width * new_height * img.components_num];
+    unsigned char* src = img.arr + (crop_top * img.width + crop_left) * img.components_num;
+    unsigned char* dst = newArr;
+
+    for (unsigned i = 0; i < new_height; ++i)
+    {
+        memcpy(dst, src, new_width * img.components_num);
+        src += img.width * img.components_num;
+        dst += new_width * img.components_num;
+    }
+
+
+    delete[] img.arr;
+
+    img.set_arr_interlaced(newArr, new_width, new_height);
+#endif
+}
+
 void reflect(matrix& img, bool horizontal, bool vertical) 
 {
+#ifdef OPENCL_IMPL
+    opencl_impl::reflect_gpu(img, horizontal, vertical);
+#else
     if (!horizontal && !vertical) return;
 
     unsigned char* newArr = new unsigned char[img.width * img.height * img.components_num];
@@ -23,6 +72,7 @@ void reflect(matrix& img, bool horizontal, bool vertical)
 
     delete[] img.arr;
     img.arr = newArr;
+#endif
 }
 
 void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result) {
@@ -54,6 +104,9 @@ void bilinear_interpolate(matrix& img, float x, float y, unsigned char* result) 
 }
 
 void shear(matrix& img, float shx, float shy) {
+#ifdef OPENCL_IMPL
+    opencl_impl::shear_gpu(img, shx, shy);
+#else
     unsigned new_width = static_cast<unsigned>(img.width + 2*std::abs(shy)*img.height);
     unsigned new_height = static_cast<unsigned>(img.height + 2*std::abs(shx)*img.width);
 
@@ -78,9 +131,13 @@ void shear(matrix& img, float shx, float shy) {
 
     delete[] img.arr;
     img.set_arr_interlaced(newArr, new_width, new_height);
+#endif
 }
 
 void rotate(matrix& img, float angle) {
+#ifdef OPENCL_IMPL
+    opencl_impl::rotate_gpu(img, angle);
+#else
     float radians = angle * M_PI / 180.0f;
     float cos_theta = cos(radians);
     float sin_theta = sin(radians);
@@ -159,4 +216,5 @@ void rotate(matrix& img, float angle) {
     }
     delete[] img.arr;
     img.set_arr_interlaced(newArr, new_width, new_height);
+#endif
 }

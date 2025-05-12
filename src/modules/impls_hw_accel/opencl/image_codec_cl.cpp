@@ -5,9 +5,14 @@
 #include <cstring>
 #include <sstream>
 #include <iomanip>
+#include <cmath>
 #include "impls_hw_accel/opencl/image_codec_cl.h"
 #include <filesystem>
 #include "lodepng.h"
+
+// External global flags
+extern bool g_verbose_enabled;
+extern bool g_force_gpu_enabled;
 #include "image_edit.h" // For global flags
 
 extern bool g_verbose_enabled;
@@ -29,6 +34,8 @@ inline ImageColorScheme LodePNGColorTypeToImageColorScheme(LodePNGColorType colo
         default:
             return ImageColorScheme::IMAGE_RGB;
     }
+
+
 }
 
 namespace {
@@ -440,8 +447,23 @@ void image_codec_cl::save_image_file(std::vector<unsigned char>* png_buffer, std
     std::cout << "[OpenCL] File saved successfully as: " << image_filepath << std::endl;
 }
 
-// Function for rotating an image on GPU
-bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
+// Method to reflect image on GPU - just a stub to return false
+bool image_codec_cl::reflect_on_gpu(matrix* img_matrix, bool horizontal, bool vertical) {
+    if (g_verbose_enabled) {
+        std::cout << "[OpenCL] Reflect on GPU not implemented, falling back to CPU implementation" << std::endl;
+    }
+    return false;
+}
+
+// Method to shear image on GPU - just a stub to return false 
+bool image_codec_cl::shear_on_gpu(matrix* img_matrix, float shx, float shy) {
+    if (g_verbose_enabled) {
+        std::cout << "[OpenCL] Shear on GPU not implemented, falling back to CPU implementation" << std::endl;
+    }
+    return false;
+}
+
+bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, float angle) {
     if (g_verbose_enabled) {
         std::cout << "[OpenCL] Rotating image on GPU by " << angle << " degrees" << std::endl;
     }
@@ -452,7 +474,7 @@ bool image_codec_cl::rotate_on_gpu(matrix* img_matrix, unsigned angle) {
     }
 
     // Normalize angle to 0-359
-    angle = angle % 360;
+    angle = std::fmod(angle, 360.0f);
     if (angle == 0) {
         if (g_verbose_enabled) {
             std::cout << "[OpenCL] No rotation needed (angle=0)" << std::endl;

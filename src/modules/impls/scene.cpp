@@ -16,7 +16,7 @@ scene::scene()
 {
     std::cout << "Initializing scene..." << std::endl;
 
-#ifdef OPENCL_IMPL
+#if defined(OPENCL_IMPL) && !defined(NOCL)
     std::cout << "OpenCL support is enabled" << std::endl;
     if (g_force_gpu_enabled) {
         std::cout << "GPU mode is enabled, trying to create OpenCL codec..." << std::endl;

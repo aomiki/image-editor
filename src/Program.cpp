@@ -88,9 +88,31 @@ int main(int argc, char* argv[]) {
         case CommandType::ROTATE: {
             auto rotateData = parser.get_rotate_command_data();
             if (rotateData) {
-                std::cout << "Rotating image: " << rotateData->imagePath << " by " << rotateData->angle << " degrees\n";
+                std::cout << "Processing image: " << rotateData->imagePath << "\n";
                 transform_image_rotate(rotateData->imagePath, &codec, rotateData->angle);
                 std::cout << rotateData->imagePath << " rotated successfully\n";
+            }
+            return 0;
+        }
+
+        case CommandType::REFLECT: {
+            auto reflectData = parser.get_reflect_command_data();
+            if (reflectData) {
+                std::cout << "Reflecting image: " << reflectData->imagePath << "\n";
+                transform_image_reflect(reflectData->imagePath, &codec,
+                                     reflectData->horizontal, reflectData->vertical);
+                std::cout << reflectData->imagePath << " reflected successfully\n";
+            }
+            return 0;
+        }
+
+        case CommandType::SHEAR: {
+            auto shearData = parser.get_shear_command_data();
+            if (shearData) {
+                std::cout << "Shearing image: " << shearData->imagePath << "\n";
+                transform_image_shear(shearData->imagePath, &codec,
+                                   shearData->shearX, shearData->shearY);
+                std::cout << shearData->imagePath << " sheared successfully\n";
             }
             return 0;
         }

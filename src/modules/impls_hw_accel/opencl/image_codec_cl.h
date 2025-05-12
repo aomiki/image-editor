@@ -30,5 +30,11 @@ public:
     void save_image_file(std::vector<unsigned char>* png_buffer, std::string image_filepath);
 
     // Function for rotating an image on the GPU
-    bool rotate_on_gpu(matrix* img_matrix, unsigned angle);
+    bool rotate_on_gpu(matrix* img_matrix, float angle);
+    
+    // Function for reflecting an image on the GPU
+    bool reflect_on_gpu(matrix* img_matrix, bool horizontal, bool vertical);
+    
+    // Function for shearing an image on the GPU
+    bool shear_on_gpu(matrix* img_matrix, float shx, float shy);
 }; 
