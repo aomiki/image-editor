@@ -87,7 +87,10 @@
     "hash_map": "cpp",
     "cfenv": "cpp",
     "csetjmp": "cpp",
-    "source_location": "cpp"
+    "source_location": "cpp",
+    "strstream": "cpp",
+    "queue": "cpp",
+    "stack": "cpp"
   },
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

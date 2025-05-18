@@ -33,4 +33,6 @@ class scene
         void crop(unsigned crop_left, unsigned crop_top, unsigned crop_right, unsigned crop_bottom);
         void reflect(bool horizontal, bool vertical);
         void shear(float shx, float shy);
+        void grayscale();
+        void gaussian_blur(float sigma);
 };

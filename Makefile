@@ -51,7 +51,7 @@ CUDA_MODULES := $(patsubst %.cu,%.o,$(CUDA_MODULES_SRC))
 CUDA_MODULES_LINKED := $(patsubst %,%.linked.o,$(CUDA_MODULES_SRC))
 
 LDFLAGS_CUDA := -I/opt/cuda/include/ -L/opt/cuda/lib
-LDLIBS_CUDA := -lcuda -lcudart -lnvjpeg_static -lculibos -lcudart -lcudadevrt
+LDLIBS_CUDA := -lcuda -lcudart -lnvjpeg_static -lculibos -lcudart -lcudadevrt -lcublas
 
 #OpenCL implementation
 OPENCL_MODULES_SRC := $(wildcard $(MODULES_DIR)/impls_hw_accel/opencl/*.cpp)

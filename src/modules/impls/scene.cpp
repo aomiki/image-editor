@@ -12,6 +12,7 @@ extern bool g_verbose_enabled;
 #include "impls_hw_accel/opencl/image_codec_cl.h"
 #endif
 
+#include "image_filters.h"
 scene::scene()
 {
     std::cout << "Initializing scene..." << std::endl;
@@ -165,4 +166,12 @@ void scene::reflect(bool horizontal, bool vertical)
 void scene::shear(float shx, float shy)
 {
     ::shear(*img_matrix, shx, shy);
+}
+void scene::grayscale() {
+        ::grayscale(*img_matrix);
+}
+void scene::gaussian_blur(float sigma) {
+    if (img_matrix) {
+        ::gaussian_blur(*img_matrix, sigma);
+    }
 }
