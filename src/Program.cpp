@@ -13,6 +13,15 @@
 
 namespace fs = std::filesystem;
 
+// Global flags for controlling behavior
+bool g_verbose_enabled = false;
+bool g_force_gpu_enabled = false;
+
+// Make flags accessible to other modules
+extern bool g_verbose_enabled;
+extern bool g_force_gpu_enabled;
+
+
 const fs::path result_folder("output");
 const fs::path input_folder ("input");
 
@@ -24,6 +33,26 @@ int main(int argc, char* argv[]) {
     CmdParser parser;
     parser.parse_arguments(argc, argv);
     CommandType cmdType = parser.get_command_type();
+
+    // Set the global flags
+    g_verbose_enabled = parser.is_verbose();
+    g_force_gpu_enabled = parser.is_force_gpu();
+
+    if (g_verbose_enabled) {
+        std::cout << "Verbose mode enabled" << std::endl;
+    }
+
+    if (g_force_gpu_enabled) {
+        std::cout << "Forcing GPU mode (will not fall back to CPU)" << std::endl;
+    }
+
+    // If no valid command was specified, show help
+    if (cmdType == CommandType::NONE) {
+        std::cout << "No valid command specified. Use --help for available options.\n";
+        return 1;
+    }
+
+
 
     image_codec codec;
 
@@ -55,26 +84,48 @@ int main(int argc, char* argv[]) {
             auto cropData = parser.get_crop_command_data();
             if (cropData) {
                 std::cout << "Cropping image: " << cropData->imagePath << "\n";
-                transform_image_crop(cropData->imagePath, &codec, cropData->crop_left, cropData->crop_top, 
+                transform_image_crop(cropData->imagePath, &codec, cropData->crop_left, cropData->crop_top,
                                                                   cropData->crop_right, cropData->crop_bottom);
                 std::cout << cropData->imagePath << " cropped successfully\n";
             }
             return 0;
         }
-    
+
         case CommandType::ROTATE: {
             auto rotateData = parser.get_rotate_command_data();
             if (rotateData) {
-                std::cout << "Rotating image: " << rotateData->imagePath << " by " << rotateData->angle << " degrees\n";
+                std::cout << "Processing image: " << rotateData->imagePath << "\n";
                 transform_image_rotate(rotateData->imagePath, &codec, rotateData->angle);
                 std::cout << rotateData->imagePath << " rotated successfully\n";
             }
             return 0;
         }
 
+        case CommandType::REFLECT: {
+            auto reflectData = parser.get_reflect_command_data();
+            if (reflectData) {
+                std::cout << "Reflecting image: " << reflectData->imagePath << "\n";
+                transform_image_reflect(reflectData->imagePath, &codec,
+                                     reflectData->horizontal, reflectData->vertical);
+                std::cout << reflectData->imagePath << " reflected successfully\n";
+            }
+            return 0;
+        }
+
+        case CommandType::SHEAR: {
+            auto shearData = parser.get_shear_command_data();
+            if (shearData) {
+                std::cout << "Shearing image: " << shearData->imagePath << "\n";
+                transform_image_shear(shearData->imagePath, &codec,
+                                   shearData->shearX, shearData->shearY);
+                std::cout << shearData->imagePath << " sheared successfully\n";
+            }
+            return 0;
+        }
+
         case CommandType::NONE:
         default:
-            std::cout << "No valid command specified\n";
+            std::cout << "No valid command specified. Use --help for available options.\n";
             return 1;
     }
 }

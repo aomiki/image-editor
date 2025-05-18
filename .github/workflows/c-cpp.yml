@@ -12,10 +12,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - name: Install General
         run: |
           sudo apt-get update
-          sudo apt-get install -y libboost-program-options-dev qt6-base-dev
+          sudo apt-get install -y \
+            libboost-program-options-dev \
+            qt6-base-dev \
+            libblas-dev \
+            libopenblas-dev
 
       - name: checkout lode
         run: git submodule update --init --recursive

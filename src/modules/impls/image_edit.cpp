@@ -1,11 +1,15 @@
 #include "image_edit.h"
 #include "image_transforms.h"
+#if defined(OPENCL_IMPL) && !defined(NOCL)
+#include "impls_hw_accel/opencl/image_codec_cl.h"
+#endif
 #include "image_filters.h"
 #include <vector>
 #include <string>
+#include <iostream>
 
 
-void transform_image_crop(std::string filepath, image_codec* codec, 
+void transform_image_crop(std::string filepath, image_codec* codec,
                          unsigned int crop_left, unsigned int crop_top,
                          unsigned int crop_right, unsigned int crop_bottom)
 {
@@ -16,15 +20,15 @@ void transform_image_crop(std::string filepath, image_codec* codec,
 
     matrix* mat = nullptr;
 
-    if (info.colorScheme == ImageColorScheme::IMAGE_RGB) 
+    if (info.colorScheme == ImageColorScheme::IMAGE_RGB)
     {
         mat = new matrix_rgb(info.width, info.height);
-    } 
-    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY) 
+    }
+    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY)
     {
         mat = new matrix_gray(info.width, info.height);
     }
-    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE)
     {
         mat = new matrix_rgb(info.width, info.height);
     }
@@ -49,15 +53,15 @@ void transform_image_reflect(std::string filepath, image_codec* codec, bool hori
 
     matrix* mat = nullptr;
 
-    if (info.colorScheme == ImageColorScheme::IMAGE_RGB) 
+    if (info.colorScheme == ImageColorScheme::IMAGE_RGB)
     {
         mat = new matrix_rgb(info.width, info.height);
-    } 
-    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY) 
+    }
+    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY)
     {
         mat = new matrix_gray(info.width, info.height);
     }
-    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE)
     {
         mat = new matrix_rgb(info.width, info.height);
     }
@@ -70,7 +74,7 @@ void transform_image_reflect(std::string filepath, image_codec* codec, bool hori
     codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
     codec->save_image_file(&img_buffer, result_folder / "reflect_result");
 
-    //delete mat;  
+    //delete mat;
 }
 
 void transform_image_shear(std::string filepath, image_codec* codec, float shx, float shy)
@@ -81,15 +85,15 @@ void transform_image_shear(std::string filepath, image_codec* codec, float shx, 
     ImageInfo info = codec->read_info(&img_buffer);
 
     matrix* mat = nullptr;
-    if (info.colorScheme == ImageColorScheme::IMAGE_RGB) 
+    if (info.colorScheme == ImageColorScheme::IMAGE_RGB)
     {
         mat = new matrix_rgb(info.width, info.height);
-    } 
-    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY) 
+    }
+    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY)
     {
         mat = new matrix_gray(info.width, info.height);
     }
-    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE)
     {
         mat = new matrix_rgb(info.width, info.height);
     }
@@ -112,15 +116,15 @@ void transform_image_rotate(std::string filepath, image_codec* codec, float angl
 
     matrix* mat = nullptr;
 
-    if (info.colorScheme == ImageColorScheme::IMAGE_RGB) 
+    if (info.colorScheme == ImageColorScheme::IMAGE_RGB)
     {
         mat = new matrix_rgb(info.width, info.height);
-    } 
-    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY) 
+    }
+    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY)
     {
         mat = new matrix_gray(info.width, info.height);
     }
-    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE)
     {
         mat = new matrix_rgb(info.width, info.height);
     }
@@ -133,9 +137,13 @@ void transform_image_rotate(std::string filepath, image_codec* codec, float angl
     codec->encode(&img_buffer, mat, info.colorScheme, info.bit_depth);
     codec->save_image_file(&img_buffer, result_folder / "rotated_result");
 
-    //delete mat;  
+<<<<<<< HEAD
+    //delete mat;
 }
-void transform_image_grayscale(std::string filepath, image_codec* codec) 
+=======
+    //delete mat;
+}
+void transform_image_grayscale(std::string filepath, image_codec* codec)
 {
     std::vector<unsigned char> img_buffer;
 
@@ -144,15 +152,15 @@ void transform_image_grayscale(std::string filepath, image_codec* codec)
 
     matrix* mat = nullptr;
 
-    if (info.colorScheme == ImageColorScheme::IMAGE_RGB) 
+    if (info.colorScheme == ImageColorScheme::IMAGE_RGB)
     {
         mat = new matrix_rgb(info.width, info.height);
-    } 
-    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY) 
+    }
+    else if (info.colorScheme == ImageColorScheme::IMAGE_GRAY)
     {
         mat = new matrix_gray(info.width, info.height);
     }
-    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE) 
+    else if (info.colorScheme == ImageColorScheme::IMAGE_PALETTE)
     {
         mat = new matrix_rgb(info.width, info.height);
     }
@@ -166,3 +174,4 @@ void transform_image_grayscale(std::string filepath, image_codec* codec)
 
     //delete mat;
 }
+>>>>>>> upstream/main

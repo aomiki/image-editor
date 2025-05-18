@@ -97,7 +97,7 @@ void MainWindow::buttonEditClicked()
     if (op_i > 0)
     {
         log("finishing edit, encoding...");
-        curr_scene->encode();   
+        curr_scene->encode();
         updateImage();
     }
 }
@@ -109,11 +109,11 @@ void MainWindow::updateImage(bool imgChanged)
     {
         unsigned img_size = curr_scene->get_img_binary_size();
         unsigned char* img_binary = new unsigned char[img_size];
-    
+
         curr_scene->get_img_binary(img_binary);
-    
+
         std::string img_format_str;
-    
+
         switch (curr_scene->get_codec()->native_format())
         {
             case PNG:
@@ -126,7 +126,7 @@ void MainWindow::updateImage(bool imgChanged)
                 log("unsupported image format, can't display");
                 return;
         }
-    
+
         curr_image = new QImage();
         curr_image->loadFromData(img_binary, img_size, img_format_str.c_str());
 
@@ -183,7 +183,7 @@ void MainWindow::buttonSaveClicked()
         default:
             log("unsuported image format, saving without extension");
     }
-    
+
     std::string filepath = "output/"+ image_basename;
     log(QString::fromStdString("saving to file: " + filepath));
 
