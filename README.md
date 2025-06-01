@@ -4,7 +4,7 @@
 
 Image editor with the following features:
 * Image transformations (crop, reflect, rotate, shear)
-* Filters (blur, black and white)
+* Filters (blur, grayscale)
 * Hardware acceleration (CUDA - for transformations, filters, image codec)
 * GUI (QT-based)
 
