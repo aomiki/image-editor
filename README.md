@@ -2,32 +2,61 @@
 [![Build with LodePNG](https://github.com/aomiki/image-editor/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/aomiki/image-editor/actions/workflows/c-cpp.yml)
 [![Build with CUDA](https://github.com/aomiki/image-editor/actions/workflows/cuda.yml/badge.svg)](https://github.com/aomiki/image-editor/actions/workflows/cuda.yml)
 
-## Build
+Image editor with the following features:
+* Image transformations (crop, reflect, rotate, shear)
+* Filters (blur, black and white)
+* Hardware acceleration (CUDA - for transformations, filters, image codec)
+* GUI (QT-based)
 
-* Build with CUDA codec:
+## Building
 
-    `make graphics-cuda.out`
+The project can be built with different backends for image processing. The workflow has been tested on Arch Linux and would likely run into errors on any other distro / OS.
+Every build configuration requires QT6 development libraries and boost program_options library.
 
-* Build with LodePNG codec:
+### No acceleration (CPU)
+This target builds the project using the LodePNG library for image handling, CPU-based implementations. This requires OpenBLAS library installed.
 
-    `make graphics-lode.out`
+```bash
+make graphics-lode.out
+```
 
-* Clean build files:
+### NVIDIA GPU acceleration
 
-    `make clean`
+This target builds the project leveraging NVIDIA CUDA for GPU acceleration. This requires a compatible NVIDIA GPU and the CUDA Toolkit installed.
+```bash
+make graphics-cuda.out
+```
 
-* Clean output folder:
+### Cleaning build files
 
-    `make clean-output`
+Clean the generated object files and executables:
+```
+make clean
+```
 
-## Run
+## Running
 
 Create `output` folder, then run:
 
-* If built with CUDA codec:
+### No acceleration:
 
-    `./graphics-cuda.out`
+Get help for CLI:
+```bash
+./graphics-lode.out --help
+```
 
-* If built with LodePNG codec:
+Launch GUI:
+```bash
+./graphics-lode.out --gui
+```
 
-    `./graphics-lode.out`
+### NVIDIA GPU acceleration
+Get help for CLI:
+```bash
+./graphics-cuda.out --help
+```
+
+Launch GUI:
+```bash
+./graphics-cuda.out --gui
+```
