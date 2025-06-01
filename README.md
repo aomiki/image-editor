@@ -14,7 +14,7 @@ The project can be built with different backends for image processing. The workf
 Every build configuration requires QT6 development libraries and boost program_options library.
 
 ### No acceleration (CPU)
-This target builds the project using the LodePNG library for image handling, CPU-based implementations. This requires OpenBLAS library installed.
+This target builds the project using the LodePNG library as image codec, CPU-based implementation for image processing. This requires OpenBLAS library installed.
 
 ```bash
 make graphics-lode.out
